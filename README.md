@@ -12,7 +12,7 @@ yet._
 
 Take control over your Maya playblast. Become the boss over the settings like
 resolutions, nodes to show and anything related to the view. While managing
-your settings instantly see what you playblast will look like, WYSIWYG.
+your settings instantly see what your playblast will look like, WYSIWYG.
 
 For `capture_gui` to work you'll need to have `capture` installed, which you
 can get [here](https://github.com/abstractfactory/maya-capture).
