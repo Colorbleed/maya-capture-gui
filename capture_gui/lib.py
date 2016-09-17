@@ -3,6 +3,7 @@ import logging
 import os
 import glob
 import subprocess
+import contextlib
 
 import maya.cmds as mc
 import maya.mel as mel
@@ -245,3 +246,13 @@ def list_compressions(format='avi'):
 
     cmd = 'playblast -format "{0}" -query -compression'.format(format)
     return mel.eval(cmd)
+
+
+@contextlib.contextmanager
+def no_undo():
+    """Disable undo during the context"""
+    try:
+        mc.undoInfo(stateWithoutFlush=False)
+        yield
+    finally:
+        mc.undoInfo(stateWithoutFlush=True)

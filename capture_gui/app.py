@@ -3,7 +3,6 @@ import math
 import os
 import tempfile
 import capture
-import contextlib
 
 from functools import partial
 from .vendor.Qt import QtCore, QtWidgets
@@ -14,16 +13,6 @@ from . import lib
 log = logging.getLogger(__name__)
 
 # TODO: Implement way to set "default browse location" override
-
-
-@contextlib.contextmanager
-def no_undo():
-    """Disable undo during the context"""
-    try:
-        mc.undoInfo(stateWithoutFlush=False)
-        yield
-    finally:
-        mc.undoInfo(stateWithoutFlush=True)
 
 
 class Separator(QtWidgets.QFrame):
@@ -481,7 +470,7 @@ class PreviewWidget(QtWidgets.QWidget):
         # time into the undo queue to enforce correct undoing.
         mc.currentTime(frame, update=True)
 
-        with no_undo():
+        with lib.no_undo():
             options = self.options_getter()
 
             tempdir = tempfile.mkdtemp()
