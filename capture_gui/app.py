@@ -3,8 +3,8 @@ import math
 import os
 import tempfile
 import capture
-
 from functools import partial
+
 from .vendor.Qt import QtCore, QtWidgets
 
 import maya.cmds as mc
@@ -16,19 +16,35 @@ log = logging.getLogger(__name__)
 
 
 class Separator(QtWidgets.QFrame):
+    """A horizontal line separator looking like a Maya separator"""
     def __init__(self):
-        super(Separator,self).__init__()
+        super(Separator, self).__init__()
         self.setFrameShape(QtWidgets.QFrame.HLine)
         self.setFrameShadow(QtWidgets.QFrame.Sunken)
 
 
 class OptionsPlugin(QtWidgets.QWidget):
+    """Base class for Option Widgets.
+
+    This is a regular Qt widget that can be added to the capture interface
+    as an additional component, like a plugin.
+
+    """
+
     label = ""
     hidden = False
     options_changed = QtCore.Signal()
 
     def get_options(self, panel=""):
         """Return the options as set in this plug-in widget.
+
+        This is used to identify the settings to be used for the playblast.
+        As such the values should be returned in a way that a call to
+        `capture.capture()` would understand as arguments.
+
+        Args:
+            panel (str): The active modelPanel of the user. This is passed so
+                values could potentially be parsed from the active panel
 
         Returns:
             dict: The options for this plug-in. (formatted `capture` style)
@@ -43,7 +59,6 @@ class CameraWidget(OptionsPlugin):
     Allows to select a camera.
 
     """
-
     label = "Camera"
 
     def __init__(self, parent=None):
@@ -427,6 +442,7 @@ class TimeWidget(OptionsPlugin):
 
 
 class ClickLabel(QtWidgets.QLabel):
+    """A QLabel that emits a clicked signal when clicked upon."""
     clicked = QtCore.Signal()
 
     def mouseReleaseEvent(self, event):
@@ -436,6 +452,13 @@ class ClickLabel(QtWidgets.QLabel):
 
 
 class PreviewWidget(QtWidgets.QWidget):
+    """The playblast image preview widget.
+
+    Upon refresh it will retrieve the options through the function set as
+    `options_getter` and make a call to `capture.capture()` for a single
+    frame (playblasted) snapshot. The result is displayed as image.
+
+    """
 
     def __init__(self, options_getter, parent=None):
         super(PreviewWidget, self).__init__(parent=parent)
