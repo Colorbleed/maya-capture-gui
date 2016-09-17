@@ -6,7 +6,7 @@ import capture
 import contextlib
 
 from functools import partial
-from Qt import QtCore, QtWidgets
+from .vendor.Qt import QtCore, QtWidgets
 
 import maya.cmds as mc
 from . import lib
