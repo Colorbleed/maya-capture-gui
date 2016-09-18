@@ -36,9 +36,8 @@ class SeparatorHeader(QtWidgets.QWidget):
 
         label = QtWidgets.QLabel(header)
         font = QtWidgets.QFont()
-        font.setBold(False)
+        font.setBold(True)
         font.setPointSize(8)
-        font.setCapitalization(font.AllUppercase)
 
         # We disable the label so it becomes Maya's grayed out darker
         # color without overriding the stylesheet so we can rely as much
