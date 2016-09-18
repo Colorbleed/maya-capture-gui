@@ -5,10 +5,9 @@ A visual interface front-end for
 
 ![Capture GUI preview](https://cloud.githubusercontent.com/assets/2439881/18618526/d90fd9bc-7de8-11e6-83a3-ed02ff513c7d.png)
 
-_Currently this is a initial commit to open discussion about overall
+_Currently this is an initial commit to open discussion about overall
 implementation.  
-As such, consider this experimental and not fit for production
-yet._
+As such, consider this experimental and not yet fit for production._
 
 ### Usage
 
@@ -29,7 +28,7 @@ from capture_gui.vendor.Qt import QtWidgets
 def get_maya_main_window():
     """Return Maya's main window"""
     for obj in QtWidgets.qApp.topLevelWidgets():
-        if obj.objectName() == 'MayaWindow':\
+        if obj.objectName() == 'MayaWindow':
             return obj
 
 
@@ -51,7 +50,7 @@ from capture_gui.vendor.Qt import QtWidgets
 def get_maya_main_window():
     """Return Maya's main window"""
     for obj in QtWidgets.qApp.topLevelWidgets():
-        if obj.objectName() == 'MayaWindow':\
+        if obj.objectName() == 'MayaWindow':
             return obj
 
 
