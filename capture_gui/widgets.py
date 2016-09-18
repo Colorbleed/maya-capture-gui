@@ -323,6 +323,7 @@ class CodecWidget(OptionsPlugin):
         self.quality.setMinimum(0)
         self.quality.setMaximum(100)
         self.quality.setValue(100)
+        self.quality.setToolTip("Compression quality percentage")
 
         self._layout.addWidget(self.format)
         self._layout.addWidget(self.compression)
