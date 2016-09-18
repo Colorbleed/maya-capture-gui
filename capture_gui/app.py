@@ -114,11 +114,19 @@ class App(QtWidgets.QWidget):
     playblast_finished = QtCore.Signal(dict)    # playblast finished
     viewer_start = QtCore.Signal(dict)          # viewer about to start
 
+    WINDOW_OBJECT = "CaptureGUI"
+    WINDOW_TITLE = "Capture"
+
     def __init__(self, parent=None):
         super(App, self).__init__(parent=parent)
 
-        self.setObjectName("CaptureGUI")
-        self.setWindowTitle("Capture")
+        self.setObjectName(self.WINDOW_OBJECT)
+        self.setWindowTitle(self.WINDOW_TITLE)
+
+        # Makes Maya perform magic which makes the window stay
+        # on top in OS X and Linux. As an added bonus, it'll
+        # make Maya remember the window position
+        self.setProperty("saveWindowPref", True)
 
         self.layout = QtWidgets.QVBoxLayout()
         self.setLayout(self.layout)
