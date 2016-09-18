@@ -87,6 +87,7 @@ class PreviewWidget(QtWidgets.QWidget):
             options['off_screen'] = True
             options['format'] = "image"
             options['compression'] = "jpg"
+            options['sound'] = None
 
             fname = capture.capture(**options)
 
