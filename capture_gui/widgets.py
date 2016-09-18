@@ -74,9 +74,8 @@ class CameraWidget(OptionsPlugin):
         self.cameras.currentIndexChanged.connect(self.options_changed)
 
     def set_active_cam(self):
-        self.on_refresh(reselect=False)
         cam = lib.get_current_camera()
-        self.select_camera(cam)
+        self.on_refresh(camera=cam)
 
     def select_camera(self, cam):
         if cam:
@@ -96,18 +95,37 @@ class CameraWidget(OptionsPlugin):
     def get_options(self, panel=""):
         """Return currently selected camera from combobox."""
 
+        idx = self.cameras.currentIndex()
+        camera = str(self.cameras.itemText(idx)) if idx != -1 else None
+
         return {
-            "camera": str(self.cameras.itemText(self.cameras.currentIndex()))
+            "camera": camera
         }
 
-    def on_refresh(self, reselect=True):
+    def on_refresh(self, camera=None):
+        """Refresh the camera list with all current cameras in scene.
+
+        A currentIndexChanged signal is only emitted for the cameras combobox
+        when the camera is different at the end of the refresh.
+
+        Args:
+            camera (str): When name of camera is passed it will try to select
+                the camera with this name after the refresh.
+
+        Returns:
+            None
+
+        """
+
+        cam = self.get_options()['camera']
 
         # Get original selection
-        selected_cam = None
-        if reselect:
+        if camera is None:
             index = self.cameras.currentIndex()
-            if index:
-                selected_cam = str(self.cameras.itemText(index))
+            if index != -1:
+                camera = str(self.cameras.itemText(index))
+
+        self.cameras.blockSignals(True)
 
         # Update the list with available cameras
         self.cameras.clear()
@@ -119,8 +137,14 @@ class CameraWidget(OptionsPlugin):
         self.cameras.addItems(cam_transforms)
 
         # If original selection, try to reselect
-        if selected_cam:
-            self.select_camera(selected_cam)
+        self.select_camera(camera)
+
+        self.cameras.blockSignals(False)
+
+        # If camera changed emit signal
+        if cam != self.get_options()['camera']:
+            idx = self.cameras.currentIndex()
+            self.cameras.currentIndexChanged.emit(idx)
 
 
 class ScaleWidget(OptionsPlugin):
@@ -348,6 +372,7 @@ class OptionsWidget(OptionsPlugin):
         # use settings from active panel
         view = capture.parse_view(panel)
         options.update(view)
+        options.pop("camera", None)
 
         # use active sound track
         scene = capture.parse_active_scene()
