@@ -84,6 +84,7 @@ class PreviewWidget(QtWidgets.QWidget):
         self.options_getter = options_getter
 
         layout = QtWidgets.QVBoxLayout()
+        layout.setAlignment(QtCore.Qt.AlignHCenter)
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
