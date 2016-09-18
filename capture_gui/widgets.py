@@ -157,6 +157,10 @@ class ScaleWidget(OptionsPlugin):
 
     scale_changed = QtCore.Signal()
 
+    ScaleWindow = "From Window"
+    ScaleRenderSettings = "From Render Settings"
+    ScaleCustom = "Custom"
+
     def __init__(self, parent=None):
         super(ScaleWidget, self).__init__(parent=parent)
 
@@ -165,12 +169,20 @@ class ScaleWidget(OptionsPlugin):
         self.setLayout(self._layout)
 
         # Scale
-        self.scale_mode = QtWidgets.QComboBox()
-        self.scale_mode.addItems(["From Window",
-                                  "From Render Settings",
-                                  "Custom"])
-        self.scale_mode.setCurrentIndex(1)  # Default: From render settings
-        self.scale_layout = QtWidgets.QHBoxLayout()
+        self.mode = QtWidgets.QComboBox()
+        self.mode.addItems([self.ScaleWindow,
+                            self.ScaleRenderSettings,
+                            self.ScaleCustom])
+        self.mode.setCurrentIndex(1)  # Default: From render settings
+
+        # Custom width/height
+        self.resolution = QtWidgets.QWidget()
+        self.resolution.setContentsMargins(0, 0, 0, 0)
+        resolution_layout = QtWidgets.QHBoxLayout()
+        resolution_layout.setContentsMargins(0, 0, 0, 0)
+        resolution_layout.setSpacing(0)
+
+        self.resolution.setLayout(resolution_layout)
         self.width = QtWidgets.QSpinBox()
         self.width.setMinimum(0)
         self.width.setMaximum(99999)
@@ -180,14 +192,11 @@ class ScaleWidget(OptionsPlugin):
         self.height.setMaximum(99999)
         self.height.setValue(1080)
 
-        self.scale_layout.addWidget(self.width)
-        self.scale_layout.addWidget(self.height)
+        resolution_layout.addWidget(self.width)
+        resolution_layout.addWidget(self.height)
 
         self.scale_result = QtWidgets.QLineEdit()
         self.scale_result.setReadOnly(True)
-        self.scale_result.setEnabled(False)
-
-        self._layout.addWidget(self.scale_mode)
 
         # Percentage
         self.percent_label = QtWidgets.QLabel("Scale")
@@ -210,42 +219,80 @@ class ScaleWidget(OptionsPlugin):
         self.percent_layout.addLayout(self.percent_presets)
 
         # Resulting scale display
-
-        self._layout.addWidget(self.scale_mode)
-        self._layout.addLayout(self.scale_layout)
+        self._layout.addWidget(self.mode)
+        self._layout.addWidget(self.resolution)
         self._layout.addLayout(self.percent_layout)
         self._layout.addWidget(self.scale_result)
 
+        # refresh states
+        self.on_mode_changed()
         self.on_scale_changed()
 
         # connect signals
-        self.percent.valueChanged.connect(self.options_changed)
-        self.scale_mode.currentIndexChanged.connect(self.options_changed)
-        self.width.valueChanged.connect(self.options_changed)
-        self.height.valueChanged.connect(self.options_changed)
+        self.mode.currentIndexChanged.connect(self.on_mode_changed)
+        self.mode.currentIndexChanged.connect(self.on_scale_changed)
+        self.percent.valueChanged.connect(self.on_scale_changed)
+        self.width.valueChanged.connect(self.on_scale_changed)
+        self.height.valueChanged.connect(self.on_scale_changed)
+
+    def on_mode_changed(self):
+        """Update the width/height enabled state when mode changes"""
+
+        if self.mode.currentText() != self.ScaleCustom:
+            self.width.setEnabled(False)
+            self.height.setEnabled(False)
+            self.resolution.hide()
+        else:
+            self.width.setEnabled(True)
+            self.height.setEnabled(True)
+            self.resolution.show()
 
     def on_scale_changed(self):
         """Update the resulting resolution label"""
 
         options = self.get_options()
-        self.scale_result.setText("{0}x{1}".format(int(options["width"]),
-                                                   int(options["height"])))
+
+        label = "Result: {0}x{1}".format(int(options["width"]),
+                                         int(options["height"]))
+
+        self.scale_result.setText(label)
 
     def get_options(self, panel=""):
         """Return width x height defined by the combination of settings
 
         Returns:
-            tuple: X & Y pixel width to playblast
+            dict: width and height key values
 
         """
+        mode = self.mode.currentText()
 
-        # TODO: Implement using of different modes (e.g. from window or custom)
+        if mode == self.ScaleCustom:
+            width = self.width.value()
+            height = self.height.value()
 
-        # width height from render resolution
-        width = mc.getAttr("defaultResolution.width")
-        height = mc.getAttr("defaultResolution.height")
+        elif mode == self.ScaleRenderSettings:
+            # width height from render resolution
+            width = mc.getAttr("defaultResolution.width")
+            height = mc.getAttr("defaultResolution.height")
+
+        elif mode == self.ScaleWindow:
+            # width height from active view panel size
+
+            if not panel:
+                # No panel would be passed when updating in the UI as such
+                # the resulting resolution can't be previewed. But this should
+                # never happen when starting the capture.
+                width = 0
+                height = 0
+            else:
+                width = mc.control(panel, q=True, width=True)
+                height = mc.control(panel, q=True, height=True)
+
+        else:
+            raise NotImplementedError("Unsupported scale mode: "
+                                      "{0}".format(mode))
+
         scale = [width, height]
-
         percentage = self.percent.value()
         scale = [math.floor(x * percentage) for x in scale]
 
