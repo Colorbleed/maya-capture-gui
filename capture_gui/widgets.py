@@ -404,6 +404,11 @@ class OptionsWidget(OptionsPlugin):
         self._layout.addWidget(self.use_isolate_view)
         self._layout.addWidget(self.offscreen)
 
+        # signals
+        self.use_isolate_view.stateChanged.connect(self.options_changed)
+        self.high_quality.stateChanged.connect(self.options_changed)
+        self.override_viewport.stateChanged.connect(self.options_changed)
+
         self.override_viewport.stateChanged.connect(
             self.high_quality.setEnabled)
 
