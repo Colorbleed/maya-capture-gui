@@ -20,6 +20,45 @@ class Separator(QtWidgets.QFrame):
         self.setFrameShadow(QtWidgets.QFrame.Sunken)
 
 
+class SeparatorHeader(QtWidgets.QWidget):
+    """A label with a separator line to the right side of it."""
+
+    def __init__(self, header=None, parent=None):
+        super(SeparatorHeader, self).__init__(parent=parent)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+        self.setLayout(layout)
+
+        if header is None:
+            header = ""
+
+        label = QtWidgets.QLabel(header)
+        font = QtWidgets.QFont()
+        font.setBold(False)
+        font.setPointSize(8)
+        font.setCapitalization(font.AllUppercase)
+
+        # We disable the label so it becomes Maya's grayed out darker
+        # color without overriding the stylesheet so we can rely as much
+        # on the styling of Maya as possible.
+        label.setEnabled(False)
+
+        label.setFont(font)
+        label.setContentsMargins(0, 0, 0, 0)
+        label.setSizePolicy(QtWidgets.QSizePolicy.Maximum,
+                            QtWidgets.QSizePolicy.Maximum)
+
+        separator = Separator()
+        separator.setContentsMargins(0, 0, 0, 0)
+
+        layout.addWidget(label)
+        layout.addWidget(separator)
+
+        self.label = label
+
+
 class ClickLabel(QtWidgets.QLabel):
     """A QLabel that emits a clicked signal when clicked upon."""
     clicked = QtCore.Signal()
@@ -47,13 +86,6 @@ class PreviewWidget(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
-
-        label = QtWidgets.QLabel("Preview")
-        font = QtWidgets.QFont()
-        font.setBold(True)
-        font.setPointSize(8)
-        label.setFont(font)
-        layout.addWidget(label)
 
         preview = ClickLabel()
         layout.addWidget(preview)
@@ -139,7 +171,6 @@ class App(QtWidgets.QWidget):
         # Preview
         self.preview = PreviewWidget(self.get_options)
         self.layout.addWidget(self.preview)
-        self.layout.addWidget(Separator())
 
         self.option_widgets = list()
         for plugin in [widgets.TimeWidget,
@@ -169,19 +200,9 @@ class App(QtWidgets.QWidget):
         widget = plugin()
 
         if not widget.hidden:
-            if plugin.label:
-                label = QtWidgets.QLabel(plugin.label)
-
-                font = QtWidgets.QFont()
-                font.setBold(True)
-                font.setPointSize(8)
-
-                label.setFont(font)
-                label.setContentsMargins(0, 0, 0, 0)
-                self.layout.addWidget(label)
-
+            header = SeparatorHeader(plugin.label)
+            self.layout.addWidget(header)
             self.layout.addWidget(widget)
-            self.layout.addWidget(Separator())
 
         widget.options_changed.connect(self.on_widget_settings_changed)
 
