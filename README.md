@@ -44,7 +44,7 @@ footage in your pipeline (e.g. through FFMPEG)
 
 ```python
 import capture_gui.app
-from capture_gui.vendor.Qt import QtWidgets
+from capture_gui.vendor.Qt import QtWidgets, QtCore
 
 
 def get_maya_main_window():
