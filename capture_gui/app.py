@@ -124,6 +124,10 @@ class App(QtWidgets.QWidget):
         self.setObjectName(self.WINDOW_OBJECT)
         self.setWindowTitle(self.WINDOW_TITLE)
 
+        # Set dialog window flags so the widget can be correctly parented
+        # to Maya main window
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.Dialog)
+
         # Makes Maya perform magic which makes the window stay
         # on top in OS X and Linux. As an added bonus, it'll
         # make Maya remember the window position
