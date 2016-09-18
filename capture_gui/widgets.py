@@ -345,16 +345,13 @@ class OptionsWidget(OptionsPlugin):
 
         options = dict()
 
-        # Get settings from scene
+        # use settings from active panel
         view = capture.parse_view(panel)
-        scene = capture.parse_active_scene()
         options.update(view)
-        options.update(scene)
 
-        # remove parsed information we dont want
-        options.pop("camera", None)
-        options.pop("start_frame", None)
-        options.pop("end_frame", None)
+        # use active sound track
+        scene = capture.parse_active_scene()
+        options['sound'] = scene['sound']
 
         # override default settings
         options['show_ornaments'] = False
@@ -411,14 +408,62 @@ class OptionsWidget(OptionsPlugin):
 class TimeWidget(OptionsPlugin):
     """Widget for time based options
 
-    For now used to set some default values used internally at Colorbleed.
+    This does not emit options changed signals because the time settings does
+    not influence the visual representation of the preview snapshot.
+
     """
-    # TODO: Implement time widget UI
-    hidden = True
+
+    label = "Time Range"
+
+    RangeTimeSlider = "Time Slider"
+    RangeStartEnd = "Start/End"
+
+    def __init__(self, parent=None):
+        super(TimeWidget, self).__init__(parent=parent)
+
+        self._layout = QtWidgets.QHBoxLayout()
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self._layout)
+
+        self.mode = QtWidgets.QComboBox()
+        self.mode.addItems([self.RangeTimeSlider, self.RangeStartEnd])
+
+        self.start = QtWidgets.QSpinBox()
+        self.start.setValue(1)
+        self.end = QtWidgets.QSpinBox()
+        self.end.setValue(100)
+
+        self._layout.addWidget(self.mode)
+        self._layout.addWidget(self.start)
+        self._layout.addWidget(self.end)
+
+        self.on_mode_changed()  # force enabled state refresh
+        self.mode.currentIndexChanged.connect(self.on_mode_changed)
+
+    def on_mode_changed(self):
+
+        mode = self.mode.currentText()
+
+        if mode == self.RangeTimeSlider:
+            self.start.setEnabled(False)
+            self.end.setEnabled(False)
+
+        elif mode == self.RangeStartEnd:
+            self.start.setEnabled(True)
+            self.end.setEnabled(True)
 
     def get_options(self, panel=""):
 
-        start, end = lib.get_time_slider_range()
+        mode = self.mode.currentText()
+        start = 0
+        end = 100
+
+        if mode == self.RangeTimeSlider:
+            start, end = lib.get_time_slider_range()
+
+        elif mode == self.RangeStartEnd:
+            start = self.start.value()
+            end = self.end.value()
 
         return {
             "start_frame": start,
