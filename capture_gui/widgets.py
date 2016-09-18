@@ -533,8 +533,6 @@ class TimeWidget(OptionsPlugin):
     def get_options(self, panel=""):
 
         mode = self.mode.currentText()
-        start = 0
-        end = 100
 
         if mode == self.RangeTimeSlider:
             start, end = lib.get_time_slider_range()
@@ -542,6 +540,10 @@ class TimeWidget(OptionsPlugin):
         elif mode == self.RangeStartEnd:
             start = self.start.value()
             end = self.end.value()
+
+        else:
+            raise NotImplementedError("Unsupported time range mode: "
+                                      "{0}".format(mode))
 
         return {
             "start_frame": start,
