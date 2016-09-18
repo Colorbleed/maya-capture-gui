@@ -168,6 +168,9 @@ class App(QtWidgets.QWidget):
         self.layout = QtWidgets.QVBoxLayout()
         self.setLayout(self.layout)
 
+        # Don't allow resizing to force minimum size
+        self.layout.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
+
         # Preview
         self.preview = PreviewWidget(self.get_options)
         self.layout.addWidget(self.preview)
