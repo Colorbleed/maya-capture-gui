@@ -9,6 +9,8 @@ import maya.cmds as mc
 import maya.mel as mel
 import capture
 
+from .vendor.Qt import QtWidgets
+
 log = logging.getLogger(__name__)
 
 
@@ -256,3 +258,10 @@ def no_undo():
         yield
     finally:
         mc.undoInfo(stateWithoutFlush=True)
+
+
+def get_maya_main_window():
+    """Return Maya's main window"""
+    for obj in QtWidgets.qApp.topLevelWidgets():
+        if obj.objectName() == 'MayaWindow':
+            return obj
