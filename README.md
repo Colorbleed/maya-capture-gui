@@ -3,7 +3,7 @@
 A visual interface front-end for
 [maya-capture](https://github.com/abstractfactory/maya-capture).
 
-![Capture GUI preview](https://cloud.githubusercontent.com/assets/2439881/18618526/d90fd9bc-7de8-11e6-83a3-ed02ff513c7d.png)
+![Capture GUI preview](https://cloud.githubusercontent.com/assets/2439881/18627536/c1a6b4e4-7e5b-11e6-9c69-047bd5cbbce5.jpg)
 
 _Currently this is an initial commit to open discussion about overall
 implementation.  
