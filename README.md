@@ -19,7 +19,7 @@ As such, consider this experimental and not yet tested in production._
 
 ### Installation
 
-To install, download this package and [capture]((https://github.com/abstractfactory/maya-capture)) 
+To install, download this package and [capture](https://github.com/abstractfactory/maya-capture)
 and place both in a directory where Maya can find them.
 
 
