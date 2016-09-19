@@ -3,11 +3,11 @@
 A visual interface for
 [maya-capture](https://github.com/abstractfactory/maya-capture).
 
-![Capture GUI preview](https://cloud.githubusercontent.com/assets/2439881/18627536/c1a6b4e4-7e5b-11e6-9c69-047bd5cbbce5.jpg)
+<img align="right" src="https://cloud.githubusercontent.com/assets/2439881/18627536/c1a6b4e4-7e5b-11e6-9c69-047bd5cbbce5.jpg"/>
 
-_Currently this a preview release to open discussion about overall
-implementation.  
-As such, consider this experimental and not yet tested in production._
+> WARNING: Preview release
+
+<br>
 
 ### Features
 
@@ -16,12 +16,14 @@ As such, consider this experimental and not yet tested in production._
 - Callbacks to allow custom encoding prior to opening viewer.
 - Avoid unwanted overscan; playblast what you render.
 
+<br>
 
 ### Installation
 
 To install, download this package and [capture](https://github.com/abstractfactory/maya-capture)
 and place both in a directory where Maya can find them.
 
+<br>
 
 ### Usage
 
@@ -32,8 +34,9 @@ import capture_gui
 capture_gui.main()
 ```
 
+<br>
 
-#### Advanced usages
+### Advanced
 
 Register a pre-view callback to allow a custom conversion or overlays on the 
 resulting footage in your pipeline (e.g. through FFMPEG)
