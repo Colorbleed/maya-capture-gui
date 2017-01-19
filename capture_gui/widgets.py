@@ -1,3 +1,4 @@
+import sys
 import math
 from functools import partial
 
@@ -385,6 +386,8 @@ class OptionsWidget(OptionsPlugin):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
 
+        self.show_curves = QtWidgets.QCheckBox("Show NURBS Curves")
+        self.show_curves.setChecked(False)
         self.override_viewport = QtWidgets.QCheckBox("Override viewport "
                                                      "settings")
         self.override_viewport.setChecked(True)
@@ -400,6 +403,7 @@ class OptionsWidget(OptionsPlugin):
                                   "playblast")
         self.offscreen.setChecked(True)
 
+        self._layout.addWidget(self.show_curves)
         self._layout.addWidget(self.override_viewport)
         self._layout.addWidget(self.high_quality)
         self._layout.addWidget(self.use_isolate_view)
@@ -409,12 +413,13 @@ class OptionsWidget(OptionsPlugin):
         self.use_isolate_view.stateChanged.connect(self.options_changed)
         self.high_quality.stateChanged.connect(self.options_changed)
         self.override_viewport.stateChanged.connect(self.options_changed)
+        self.show_curves.stateChanged.connect(self.options_changed)
 
         self.override_viewport.stateChanged.connect(
             self.high_quality.setEnabled)
 
     def get_options(self, panel=""):
-
+        show_curves = self.show_curves.isChecked()
         high_quality = self.high_quality.isChecked()
         override_viewport_options = self.override_viewport.isChecked()
         use_isolate_view = self.use_isolate_view.isChecked()
@@ -463,7 +468,7 @@ class OptionsWidget(OptionsPlugin):
                        'nCloths',
                        'follicles',
                        'dimensions',
-                       #  'nurbsCurves',
+                       'nurbsCurves',
                        'nParticles',
                        'nRigids',
                        'pivots',
@@ -471,6 +476,8 @@ class OptionsWidget(OptionsPlugin):
                        'headsUpDisplay',
                        'strokes',
                        'cameras']
+            if show_curves:
+                exclude.remove('nurbsCurves')
             for key in exclude:
                 options['viewport_options'][key] = False
 
@@ -507,9 +514,9 @@ class TimeWidget(OptionsPlugin):
         self.mode.addItems([self.RangeTimeSlider, self.RangeStartEnd])
 
         self.start = QtWidgets.QSpinBox()
-        self.start.setValue(1)
+        self.start.setRange(-sys.maxint, sys.maxint);
         self.end = QtWidgets.QSpinBox()
-        self.end.setValue(100)
+        self.end.setRange(-sys.maxint, sys.maxint);
 
         self._layout.addWidget(self.mode)
         self._layout.addWidget(self.start)
@@ -523,8 +530,12 @@ class TimeWidget(OptionsPlugin):
         mode = self.mode.currentText()
 
         if mode == self.RangeTimeSlider:
+            start, end = lib.get_time_slider_range()
+
             self.start.setEnabled(False)
+            self.start.setValue(start)
             self.end.setEnabled(False)
+            self.end.setValue(end)
 
         elif mode == self.RangeStartEnd:
             self.start.setEnabled(True)
