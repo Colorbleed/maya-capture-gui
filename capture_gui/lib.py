@@ -7,6 +7,7 @@ import contextlib
 
 import maya.cmds as mc
 import maya.mel as mel
+import pymel.core as pm
 import capture
 
 from .vendor.Qt import QtWidgets
@@ -194,7 +195,7 @@ def _browse(path):
             default_filename = "playblast"
 
         # Default to images rule (if rule exists in workspace)
-        images_rule = mc.workspace("images", q=1, fre=True)
+        images_rule = pm.workspace.fileRules["images"]
         if images_rule:
             root = mc.workspace(q=1, rd=1)
             default_root = os.path.join(root, images_rule)
