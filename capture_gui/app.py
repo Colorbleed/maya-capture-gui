@@ -3,7 +3,7 @@ import os
 import tempfile
 import capture
 
-from .vendor.Qt import QtCore, QtWidgets
+from .vendor.Qt import QtCore, QtWidgets, QtGui
 
 import maya.cmds as mc
 from . import lib
@@ -35,7 +35,7 @@ class SeparatorHeader(QtWidgets.QWidget):
             header = ""
 
         label = QtWidgets.QLabel(header)
-        font = QtWidgets.QFont()
+        font = QtGui.QFont()
         font.setBold(True)
         font.setPointSize(8)
 
@@ -127,7 +127,7 @@ class PreviewWidget(QtWidgets.QWidget):
                 log.warning("Preview failed")
                 return
 
-            image = QtWidgets.QPixmap(fname)
+            image = QtGui.QPixmap(fname)
             self.preview.setPixmap(image)
             os.remove(fname)
 
