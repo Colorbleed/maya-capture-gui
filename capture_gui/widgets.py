@@ -385,15 +385,14 @@ class OptionsWidget(OptionsPlugin):
         self._layout = QtWidgets.QVBoxLayout()
         self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
-
-        self.show_curves = QtWidgets.QCheckBox("Show NURBS Curves")
-        self.show_curves.setChecked(False)
         self.override_viewport = QtWidgets.QCheckBox("Override viewport "
                                                      "settings")
         self.override_viewport.setChecked(True)
+        self.show_curves = QtWidgets.QCheckBox("\t\t\t Show NURBS Curves")
+        self.show_curves.setChecked(False)
         self.high_quality = QtWidgets.QCheckBox()
         self.high_quality.setChecked(True)
-        self.high_quality.setText("HQ: Viewport 2.0 + AA")
+        self.high_quality.setText("\t\t\t HQ: Viewport 2.0 + AA")
         self.use_isolate_view = QtWidgets.QCheckBox("Use isolate view from "
                                                     "active panel")
         self.use_isolate_view.setChecked(True)
@@ -403,8 +402,8 @@ class OptionsWidget(OptionsPlugin):
                                   "playblast")
         self.offscreen.setChecked(True)
 
-        self._layout.addWidget(self.show_curves)
         self._layout.addWidget(self.override_viewport)
+        self._layout.addWidget(self.show_curves)
         self._layout.addWidget(self.high_quality)
         self._layout.addWidget(self.use_isolate_view)
         self._layout.addWidget(self.offscreen)
@@ -417,6 +416,9 @@ class OptionsWidget(OptionsPlugin):
 
         self.override_viewport.stateChanged.connect(
             self.high_quality.setEnabled)
+
+        self.override_viewport.stateChanged.connect(
+            self.show_curves.setEnabled)
 
     def get_options(self, panel=""):
         show_curves = self.show_curves.isChecked()
