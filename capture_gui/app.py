@@ -5,7 +5,7 @@ import capture
 
 from .vendor.Qt import QtCore, QtWidgets, QtGui
 
-import maya.cmds as mc
+import maya.cmds as cmds
 from . import lib
 from . import widgets
 
@@ -80,29 +80,57 @@ class PreviewWidget(QtWidgets.QWidget):
     def __init__(self, options_getter, parent=None):
         super(PreviewWidget, self).__init__(parent=parent)
 
+        # Add attributes
         self.options_getter = options_getter
+        self.previewstate = True
+        self.preview = ClickLabel()
 
-        layout = QtWidgets.QVBoxLayout()
-        layout.setAlignment(QtCore.Qt.AlignHCenter)
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
+        # region Build
+        self.layout = QtWidgets.QVBoxLayout()
+        self.layout.setAlignment(QtCore.Qt.AlignHCenter)
+        self.layout.setContentsMargins(0, 0, 0, 0)
 
-        preview = ClickLabel()
-        layout.addWidget(preview)
+        # Preview control buttons
+        self.preview_control_hlayout = QtWidgets.QHBoxLayout()
+        self.preview_enabled = QtWidgets.QCheckBox("Enable Preview")
+        self.get_preview_button = QtWidgets.QPushButton("Preview")
+        self.preview_control_hlayout.addWidget(self.preview_enabled)
+        self.preview_control_hlayout.addWidget(self.get_preview_button)
 
-        preview.clicked.connect(self.refresh)
+        self.setLayout(self.layout)
 
-        self.layout = layout
-        self.preview = preview
+        self.layout.addWidget(self.preview)
+        self.layout.addLayout(self.preview_control_hlayout)
+        # endregion Build
+
+        # Connect widgets to functions
+        self._connections()
+
+        # Set state of preview
+        self.set_preview_state()
+
+    def _connections(self):
+        """Build the link between the function and the button"""
+        self.preview.clicked.connect(self.refresh)
+        self.preview_enabled.toggled.connect(self.set_preview_state)
+        self.get_preview_button.clicked.connect(self.get_preview)
 
     def refresh(self):
 
-        frame = mc.currentTime(q=1)
+        if self.previewstate is False:
+            error = ("Cannot show preview due to it being disabled, please"
+                     "enable it in the GUI and try again")
+            QtGui.QMessageBox.critical(None,
+                                       "Preview Disabled",
+                                       str(error),
+                                       QtGui.QMessageBox.Close)
+
+        frame = cmds.currentTime(query=True)
 
         # When playblasting outside of an undo queue it seems that undoing
         # actually triggers a reset to frame 0. As such we sneak in the current
         # time into the undo queue to enforce correct undoing.
-        mc.currentTime(frame, update=True)
+        cmds.currentTime(frame, update=True)
 
         with lib.no_undo():
             options = self.options_getter()
@@ -132,6 +160,70 @@ class PreviewWidget(QtWidgets.QWidget):
             os.remove(fname)
 
 
+## refractored application
+class AppWindow(QtWidgets.QWidget):
+
+    # Signals
+    options_changed = QtCore.Signal(dict)
+    viewer_start = QtCore.Signal(dict)
+
+    def __init__(self, title, objectname, parent=None):
+        QtWidgets.QWidget.__init__(self, parent=parent)
+
+        # Add attributes
+        self.option_widgets = []
+
+        # region Set Attributes
+        self.setObjectName(objectname)
+        self.setWindowTitle(title)
+
+        # Set dialog window flags so the widget can be correctly parented
+        # to Maya main window
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.Dialog)
+        self.setProperty("saveWindowPref", True)
+        # endregion Set Attributes
+
+        # region Build
+        self.layout = QtWidgets.QVBoxLayout()
+        self.setLayout(self.layout)
+
+        for widget in[widgets.PresetWidget, widgets.TimeWidget,
+                      widgets.CameraWidget, widgets.ScaleWidget,
+                      widgets.CodecWidget, widgets.OptionsWidget]:
+            self.add_options_widget(widget)
+        # endregion Build
+
+    def add_options_widget(self, plugin):
+        """Add and options widget plug-in to the App"""
+        widget = plugin()
+        if not widget.hidden:
+            header = SeparatorHeader(plugin.label)
+            self.layout.addWidget(header)
+            self.layout.addWidget(widget)
+
+        widget.options_changed.connect(self.on_widget_settings_changed)
+
+        self.option_widgets.append(widget)
+
+    def get_options(self):
+        """
+        Collect all options set of all the widgets listed in the in the
+        option_widgets attribute of the main app
+
+        :return: a collection of settings
+        :rtype: dict
+        """
+
+        panel = lib.get_active_editor()
+
+        # Get settings from widgets
+        options = dict()
+        for widget in self.option_widgets:
+            options.update(widget.get_options(panel))
+
+        return options
+
+## Old application
 class App(QtWidgets.QWidget):
     """The main capture window.
 
@@ -143,7 +235,7 @@ class App(QtWidgets.QWidget):
 
     # Signals
     options_changed = QtCore.Signal(dict)
-    playblast_start = QtCore.Signal(dict)      # playblast about to start
+    playblast_start = QtCore.Signal(dict)       # playblast about to start
     playblast_finished = QtCore.Signal(dict)    # playblast finished
     viewer_start = QtCore.Signal(dict)          # viewer about to start
 
@@ -176,12 +268,10 @@ class App(QtWidgets.QWidget):
         self.layout.addWidget(self.preview)
 
         self.option_widgets = list()
-        for plugin in [widgets.TimeWidget,
-                       widgets.CameraWidget,
-                       widgets.ScaleWidget,
-                       widgets.CodecWidget,
-                       widgets.OptionsWidget]:
-            self.add_options_widget(plugin)
+        for widget in[widgets.PresetWidget, widgets.TimeWidget,
+                      widgets.CameraWidget, widgets.ScaleWidget,
+                      widgets.CodecWidget, widgets.OptionsWidget]:
+            self.add_options_widget(widget)
 
         # Buttons
         self.buttonsLayout = QtWidgets.QHBoxLayout()
@@ -192,11 +282,6 @@ class App(QtWidgets.QWidget):
         self.applyButton.clicked.connect(self.apply)
         self.applyCloseButton.clicked.connect(self.apply_and_close)
         self.layout.addLayout(self.buttonsLayout)
-
-        # Slots
-        self.options_changed.connect(self.preview.refresh)
-
-        self.preview.refresh()
 
     def add_options_widget(self, plugin):
         """Add and options widget plug-in to the App"""
@@ -212,6 +297,13 @@ class App(QtWidgets.QWidget):
         self.option_widgets.append(widget)
 
     def get_options(self):
+        """
+        Collect all options set of all the widgets listed in the in the
+        option_widgets attribute of the main app
+        
+        :return: a collection of settings
+        :rtype: dict
+        """
 
         panel = lib.get_active_editor()
 
@@ -221,6 +313,11 @@ class App(QtWidgets.QWidget):
             options.update(widget.get_options(panel))
 
         return options
+
+    def set_preview_state(self):
+        preview_state = self.preview_enabled.isChecked()
+        self.preview.previewstate = preview_state
+        self.preview.setVisible(preview_state)
 
     def apply(self, *args):
 
@@ -262,3 +359,65 @@ class App(QtWidgets.QWidget):
     def on_widget_settings_changed(self):
         options = self.get_options()
         self.options_changed.emit(options)
+
+    def get_preview(self):
+        self.preview.refresh()
+
+    def show_presets(self):
+        presetwindow = PresetsWindow(self)
+        presetwindow.show()
+
+
+class PresetsWindow(QtWidgets.QWidget):
+    """
+    The advanced preset widget.
+    
+    This widget is used to adjust the advanced presets of the tool and remove
+    the rarely used settings from the user's view. This improves the usability
+    of the interface
+    """
+
+    def __init__(self, parent=None):
+        QtWidgets.QWidget.__init__(self, parent=parent)
+
+        # Set inherited attributes
+        self.setWindowTitle("Advanced Presets")
+        self.setObjectName("Presets")
+
+        # Custom attributes
+        self.option_widgets = []
+
+        # Add layout
+        self.layout = QtWidgets.QVBoxLayout()
+        self.layout.setSizeConstraint(0, 0, 0, 0)
+
+        # Advanced option widgets
+        self.add_options_widget(widgets.CodecWidget)
+        self.add_options_widget(widgets.OptionsWidget)
+
+        # Buttons
+        self.button_hlayout = QtWidgets.QHBoxLayout()
+        self.save_presets_button = QtWidgets.QPushButton("Save Settings")
+        self.close_button = QtWidgets.QPushButton("Close")
+
+        self.button_hlayout.addWidget(self.save_presets_button)
+        self.button_hlayout.addWidget(self.close_button)
+
+        # Create connections
+        self._connections()
+
+    def _connections(self):
+        self.close_button.clicked.connect(self.close)
+        # self.save_presets_button.clicked.connect(self.)
+
+    def add_options_widget(self, plugin):
+        """Add and options widget plug-in to the App"""
+        widget = plugin()
+
+        if not widget.hidden:
+            header = SeparatorHeader(plugin.label)
+            self.layout.addWidget(header)
+            self.layout.addWidget(widget)
+
+        widget.options_changed.connect(self.on_widget_settings_changed)
+        self.option_widgets.append(widget)

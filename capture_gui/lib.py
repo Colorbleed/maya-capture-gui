@@ -1,13 +1,13 @@
 import sys
 import logging
+import json
 import os
 import glob
 import subprocess
 import contextlib
 
-import maya.cmds as mc
+import maya.cmds as cmds
 import maya.mel as mel
-import pymel.core as pm
 import capture
 
 from .vendor.Qt import QtWidgets
@@ -29,46 +29,42 @@ def get_current_camera():
     """
 
     # Get camera from active modelPanel  (if any)
-    panel = mc.getPanel(withFocus=True)
-    if mc.getPanel(typeOf=panel) == "modelPanel":
-        cam = mc.modelEditor(panel, q=1, camera=1)
+    panel = cmds.getPanel(withFocus=True)
+    if cmds.getPanel(typeOf=panel) == "modelPanel":
+        cam = cmds.modelEditor(panel, query=True, camera=True)
         # In some cases above returns the shape, but most often it returns the
         # transform. Still we need to make sure we return the transform.
         if cam:
-            if mc.nodeType(cam) == "transform":
+            if cmds.nodeType(cam) == "transform":
                 return cam
             # camera shape is a shape type
-            elif mc.objectType(cam, isAType="shape"):
-                parent = mc.listRelatives(cam ,
-                                          parent=True,
-                                          fullPath=True)
+            elif cmds.objectType(cam, isAType="shape"):
+                parent = cmds.listRelatives(cam, parent=True, fullPath=True)
                 if parent:
                     return parent[0]
 
     # Check if a camShape is selected (if so use that)
-    cam_shapes = mc.ls(sl=1, type="camera")
+    cam_shapes = cmds.ls(selection=True, type="camera")
     if cam_shapes:
-        return mc.listRelatives(cam_shapes,
-                                parent=True,
-                                fullPath=True)[0]
+        return cmds.listRelatives(cam_shapes,
+                                  parent=True,
+                                  fullPath=True)[0]
 
     # Check if a transform of a camShape is selected
     # (return cam transform if any)
-    transforms = mc.ls(sl=1, type="transform")
+    transforms = cmds.ls(selection=True, type="transform")
     if transforms:
-        cam_shapes = mc.listRelatives(transforms,
-                                      shapes=True,
-                                      type="camera")
+        cam_shapes = cmds.listRelatives(transforms, shapes=True, type="camera")
         if cam_shapes:
-            return mc.listRelatives(cam_shapes,
-                                    parent=True,
-                                    fullPath=True)[0]
+            return cmds.listRelatives(cam_shapes,
+                                      parent=True,
+                                      fullPath=True)[0]
 
 
 def get_active_editor():
     """Return the active editor panel to playblast with"""
-    mc.currentTime(mc.currentTime(q=1))     # fixes `cmds.playblast` undo bug
-    panel = mc.playblast(activeEditor=True)
+    cmds.currentTime(cmds.currentTime(query=True))     # fixes `cmds.playblast` undo bug
+    panel = cmds.playblast(activeEditor=True)
     return panel.split("|")[-1]
 
 
@@ -92,15 +88,16 @@ def get_time_slider_range(highlighted=True,
     if highlighted is True:
         gPlaybackSlider = mel.eval("global string $gPlayBackSlider; "
                                    "$gPlayBackSlider = $gPlayBackSlider;")
-        if mc.timeControl(gPlaybackSlider, q=1, rangeVisible=True):
-            highlightedRange = mc.timeControl(gPlaybackSlider, q=1,
-                                              rangeArray=True)
+        if cmds.timeControl(gPlaybackSlider, query=True, rangeVisible=True):
+            highlightedRange = cmds.timeControl(gPlaybackSlider,
+                                                query=True,
+                                                rangeArray=True)
             if withinHighlighted:
                 highlightedRange[-1] -= 1
             return highlightedRange
     if not highlightedOnly:
-        return [mc.playbackOptions(q=True, minTime=True),
-                mc.playbackOptions(q=True, maxTime=True)]
+        return [cmds.playbackOptions(query=True, minTime=True),
+                cmds.playbackOptions(query=True, maxTime=True)]
 
 
 def open_file(filepath):
@@ -113,6 +110,12 @@ def open_file(filepath):
         subprocess.call(('xdg-open', filepath))
     else:
         raise NotImplementedError("OS not supported: {0}".format(os.name))
+
+
+def load_json(filepath):
+    """open and read json, return read values"""
+    with open(filepath, "r") as f:
+        return json.load(f)
 
 
 def _fix_playblast_output_path(filepath):
@@ -135,7 +138,7 @@ def _fix_playblast_output_path(filepath):
     # Fix: playblast not returning correct filename (with extension)
     # Lets assume the most recently modified file is the correct one.
     if not os.path.exists(filepath):
-        files = glob.glob(filepath + ".*")
+        files = glob.glob("{}.*".format(filepath))
         if not files:
             raise RuntimeError("Couldn't find playblast from: "
                                "{0}".format(filepath))
@@ -186,7 +189,7 @@ def _browse(path):
     # Acquire path from user input if none defined
     if path is None:
 
-        scene_path = mc.file(q=1, sn=1)
+        scene_path = cmds.file(query=True, sceneName=True)
 
         # use scene file name as default name
         default_filename = os.path.splitext(os.path.basename(scene_path))[0]
@@ -195,13 +198,13 @@ def _browse(path):
             default_filename = "playblast"
 
         # Default to images rule (if rule exists in workspace)
-        images_rule = pm.workspace.fileRules["images"]
+        images_rule = cmds.workspace(variableEntry="images")
         if images_rule:
-            root = mc.workspace(q=1, rd=1)
+            root = cmds.workspace(query=True, rootDirectory=True)
             default_root = os.path.join(root, images_rule)
         else:
             # start browser at last browsed directory
-            default_root = mc.workspace(q=1, dir=1)
+            default_root = cmds.workspace(query=True, directory=True)
 
         # This should never be the case, but just to be safe.
         if default_root is None:
@@ -209,9 +212,9 @@ def _browse(path):
                                "Contact your local Technical Director!")
 
         default_path = os.path.join(default_root, default_filename)
-        path = mc.fileDialog2(fileMode=0,
-                              dialogStyle=2,
-                              startingDirectory=default_path)
+        path = cmds.fileDialog2(fileMode=0,
+                                dialogStyle=2,
+                                startingDirectory=default_path)
 
     if not path:
         return
@@ -237,15 +240,15 @@ def list_formats():
 
     # Workaround for Maya playblast bug where undo would
     # move the currentTime to frame one.
-    mc.currentTime(mc.currentTime(q=1))
+    cmds.currentTime(cmds.currentTime(query=True))
 
-    return mc.playblast(query=True, format=True)
+    return cmds.playblast(query=True, format=True)
 
 
 def list_compressions(format='avi'):
     # Workaround for Maya playblast bug where undo would
     # move the currentTime to frame one.
-    mc.currentTime(mc.currentTime(q=1))
+    cmds.currentTime(cmds.currentTime(query=True))
 
     cmd = 'playblast -format "{0}" -query -compression'.format(format)
     return mel.eval(cmd)
@@ -255,10 +258,10 @@ def list_compressions(format='avi'):
 def no_undo():
     """Disable undo during the context"""
     try:
-        mc.undoInfo(stateWithoutFlush=False)
+        cmds.undoInfo(stateWithoutFlush=False)
         yield
     finally:
-        mc.undoInfo(stateWithoutFlush=True)
+        cmds.undoInfo(stateWithoutFlush=True)
 
 
 def get_maya_main_window():

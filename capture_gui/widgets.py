@@ -492,6 +492,54 @@ class OptionsWidget(OptionsPlugin):
         return options
 
 
+class PresetWidget(OptionsPlugin):
+
+    label = "Presets"
+    presetfile = None
+
+    def __init__(self, parent=None):
+        OptionsPlugin.__init__(self, parent=parent)
+
+        self._layout = QtWidgets.QHBoxLayout()
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self._layout)
+
+        self.preset_combobox = QtWidgets.QComboBox()
+        self.preset_combobox.setFixedWidth(200)
+
+        # buttons
+        save_icon = self.style().standardIcon(getattr(QtWidgets.QStyle,
+                                                      "SP_DriveFDIcon"))
+        load_icon = self.style().standardIcon(getattr(QtWidgets.QStyle,
+                                                      "SP_DirOpenIcon"))
+        customize_icon = self.style().standardIcon(getattr(QtWidgets.QStyle,
+                                                           "SP_FileDialogListView"))
+
+        self.preset_save = QtWidgets.QPushButton()
+        self.preset_save.setIcon(save_icon)
+        self.preset_save.setFixedWidth(30)
+        self.preset_load = QtWidgets.QPushButton()
+        self.preset_load.setIcon(load_icon)
+        self.preset_load.setFixedWidth(30)
+        self.preset_customize = QtWidgets.QPushButton()
+        self.preset_customize.setIcon(customize_icon)
+        self.preset_customize.setFixedWidth(30)
+
+        self._layout.addWidget(self.preset_combobox)
+        self._layout.addWidget(self.preset_save)
+        self._layout.addWidget(self.preset_load)
+        self._layout.addWidget(self.preset_customize)
+
+        self.preset_load.clicked.connect(self.load_presets)
+
+    def load_presets(self):
+        filename, _ = QtWidgets.QFileDialog(self,
+                                            "Load Preset",
+                                            r"C:\Users\User")
+
+        return lib.load_json(filename)
+
+
 class TimeWidget(OptionsPlugin):
     """Widget for time based options
 
@@ -562,3 +610,5 @@ class TimeWidget(OptionsPlugin):
             "start_frame": start,
             "end_frame": end
         }
+
+
