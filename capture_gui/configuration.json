@@ -3,15 +3,24 @@
     "format": "avi",
     "sound": null,
     "compression": "MS-RLE",
-
     "height": 540.0,
     "width": 960.0,
-
     "display_options": {
-        "backgroundTop": [0.5350000262260437, 0.6169999837875366, 0.7020000219345093],
+        "backgroundTop": [
+            0.5350000262260437,
+            0.6169999837875366,
+            0.7020000219345093
+        ],
         "displayGradient": false,
-        "backgroundBottom": [0.052000001072883606, 0.052000001072883606, 0.052000001072883606],
-        "background": [0.36000001430511475, 0.36000001430511475, 0.36000001430511475
+        "backgroundBottom": [
+            0.052000001072883606,
+            0.052000001072883606,
+            0.052000001072883606
+        ],
+        "background": [
+            0.36000001430511475,
+            0.36000001430511475,
+            0.36000001430511475
         ]
     },
     "camera": "|persp",
@@ -27,13 +36,10 @@
         "displaySafeTitle": false,
         "displayFilmPivot": false
     },
-
     "start_frame": 1.0,
     "end_frame": 120.0,
-
     "viewer": true,
     "isolate": null,
-
     "viewport_options": {
         "fogMode": "linear",
         "manipulators": false,
@@ -65,7 +71,12 @@
         "polymeshes": true,
         "fogEnd": 100.0,
         "grid": false,
-        "fogColor": [0.5, 0.5, 0.5, 1.0],
+        "fogColor": [
+            0.5,
+            0.5,
+            0.5,
+            1.0
+        ],
         "nurbsSurfaces": true,
         "displayAppearance": "smoothShaded",
         "shadows": false,
@@ -122,7 +133,6 @@
         "hwFogColorG": 0.5,
         "hwFogColorB": 0.5
     },
-
     "show_ornaments": false,
     "off_screen": true
 }

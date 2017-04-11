@@ -1,4 +1,4 @@
-from .app import App
+from . import app
 from . import lib
 
 
@@ -16,7 +16,9 @@ def main(show=True):
     """
 
     parent = lib.get_maya_main_window()
-    window = App(parent=parent)
+    window = app.App(title="Capture GUI",
+                     objectname="CaptureGui",
+                     parent=parent)
 
     if show:
         window.show()
