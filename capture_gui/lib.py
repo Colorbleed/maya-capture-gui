@@ -241,7 +241,6 @@ def list_formats():
     # Workaround for Maya playblast bug where undo would
     # move the currentTime to frame one.
     cmds.currentTime(cmds.currentTime(query=True))
-
     return cmds.playblast(query=True, format=True)
 
 

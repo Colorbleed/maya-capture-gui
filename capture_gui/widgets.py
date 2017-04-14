@@ -1,4 +1,3 @@
-import json
 import sys
 import math
 from functools import partial
@@ -39,7 +38,7 @@ class OptionsPlugin(QtWidgets.QWidget):
     hidden = False
     options_changed = QtCore.Signal()
 
-    def get_options(self):
+    def get_outputs(self):
         """Return the options as set in this plug-in widget.
 
         This is used to identify the settings to be used for the playblast.
@@ -55,6 +54,22 @@ class OptionsPlugin(QtWidgets.QWidget):
 
         """
         return dict()
+
+    def get_inputs(self):
+        """
+        Get all the widget's child settings
+        :return: 
+        """
+        return dict()
+
+    def apply_inputs(self, settings):
+        """
+        Parse a dictionary of settings and set the widget's settings to the 
+        stored values
+        :param settings: 
+        :return: None 
+        """
+        pass
 
 
 class CameraWidget(OptionsPlugin):
@@ -111,15 +126,13 @@ class CameraWidget(OptionsPlugin):
                     self.cameras.setCurrentIndex(i)
                     return
 
-    def get_options(self):
+    def get_outputs(self):
         """Return currently selected camera from combobox."""
 
         idx = self.cameras.currentIndex()
         camera = str(self.cameras.itemText(idx)) if idx != -1 else None
 
-        return {
-            "camera": camera
-        }
+        return {"camera": camera}
 
     def on_refresh(self, camera=None):
         """Refresh the camera list with all current cameras in scene.
@@ -136,13 +149,13 @@ class CameraWidget(OptionsPlugin):
 
         """
 
-        cam = self.get_options()['camera']
+        cam = self.get_outputs()['camera']
 
         # Get original selection
         if camera is None:
             index = self.cameras.currentIndex()
             if index != -1:
-                camera = str(self.cameras.itemText(index))
+                camera = self.cameras.currentTetxt()
 
         self.cameras.blockSignals(True)
 
@@ -161,7 +174,7 @@ class CameraWidget(OptionsPlugin):
         self.cameras.blockSignals(False)
 
         # If camera changed emit signal
-        if cam != self.get_options()['camera']:
+        if cam != self.get_outputs()['camera']:
             idx = self.cameras.currentIndex()
             self.cameras.currentIndexChanged.emit(idx)
 
@@ -269,13 +282,13 @@ class ScaleWidget(OptionsPlugin):
     def on_scale_changed(self):
         """Update the resulting resolution label"""
 
-        options = self.get_options()
+        options = self.get_outputs()
         label = "Result: {0}x{1}".format(int(options["width"]),
                                          int(options["height"]))
 
         self.scale_result.setText(label)
 
-    def get_options(self):
+    def get_outputs(self):
         """Return width x height defined by the combination of settings
 
         Returns:
@@ -314,6 +327,25 @@ class ScaleWidget(OptionsPlugin):
         scale = [math.floor(x * percentage) for x in scale]
 
         return {"width": scale[0], "height": scale[1]}
+
+    def get_inputs(self):
+        return {"mode": self.mode.currentText(),
+                "width": self.width.value(),
+                "height": self.height.value(),
+                "percent": self.percent.value()}
+
+    def apply_inputs(self, settings):
+        # get value else fall back to default values
+        mode = settings.get("mode", self.ScaleRenderSettings)
+        width = int(settings.get("width", 1920))
+        height = int(settings.get("height", 1080))
+        percent = float(settings.get("percent", 1.0))
+
+        # set values
+        self.mode.setCurrentIndex(self.mode.findText(mode))
+        self.width.setValue(width)
+        self.height.setValue(height)
+        self.percent.setValue(percent)
 
 
 class CodecWidget(OptionsPlugin):
@@ -370,297 +402,325 @@ class CodecWidget(OptionsPlugin):
         self.compression.clear()
         self.compression.addItems(compressions)
 
-    def get_options(self):
+    def get_outputs(self):
+        """
+        Get all the options from the widget
+        
+        :return: dictionary with the settings
+        :rtype: dict
+        """
 
-        format = self.format.currentText()
-        compression = self.compression.currentText()
-        quality = self.quality.value()
+        return {"format": self.format.currentText(),
+                "compression": self.compression.currentText(),
+                "quality": self.quality.value()}
 
-        return {"format": format,
-                "compression": compression,
-                "quality": quality}
+    def get_inputs(self):
+        # a bit redundant but it will work when iterating over widgets
+        # so we don't have to write an exception
+        return self.get_outputs()
+
+    def apply_inputs(self, settings):
+        codec_format = settings.get("format", 0)
+        compr = settings.get("compression", 4)
+        quality = settings.get("quality", 100)
+
+        self.format.setCurrentIndex(self.format.findText(codec_format))
+        self.compression.setCurrentIndex(self.compression.findText(compr))
+        self.quality.setValue(int(quality))
 
 
-class OptionsWidget(OptionsPlugin):
+class ViewportOptionWidget(OptionsPlugin):
     """Widget for additional options
 
     For now used to set some default values used internally at Colorbleed.
 
     """
-    label = "Options"
+    label = "Viewport Options"
+    show_types_list = []
 
     def __init__(self, parent=None):
-        super(OptionsWidget, self).__init__(parent=parent)
+        OptionsPlugin.__init__(self, parent=parent)
 
         self.setObjectName(self.label)
 
         self._layout = QtWidgets.QVBoxLayout()
         self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
+        viewport_output_layout = QtWidgets.QHBoxLayout()
         self.override_viewport = QtWidgets.QCheckBox("Override viewport "
                                                      "settings")
         self.override_viewport.setChecked(True)
 
         # Visibility of object types
         # region Show
-        fixed_width = 150
-        self.show_types_list = []
-        self.show_types_button = QtWidgets.QPushButton("Show")
-        self.show_types_menu = QtWidgets.QMenu("Show")
-        self.show_types_button.setFixedWidth(fixed_width)
-        self.show_types_menu.setFixedWidth(fixed_width)
-        self.show_types_menu.setTearOffEnabled(True)
+        self.inputs = {}
 
-        # Show all check
-        self.show_all_action = QtWidgets.QAction(self.show_types_menu,
-                                                 text="Show All")
-        self.show_all_action.setCheckable(True)
-        self.show_all_action.setChecked(True)
-        self.show_types_menu.addAction(self.show_all_action)
-        self.show_types_menu.addSeparator()
+        self.show_types_button = None
+        self.show_types_menu = None
+        self.toggle_all = None
+        self.toggle_none = None
+        show_button = self.show_menu()
 
-        # create checkbox for
-        for objecttype in OBJECT_TYPES:
-            # create checkbox for object type
-            actionwidget = QtWidgets.QAction(self.show_types_menu,
-                                             text=objecttype)
-            actionwidget.setCheckable(True)
-            actionwidget.setChecked(True)
-            # add to menu and list of instances
-            self.show_types_list.append(actionwidget)
-            self.show_types_menu.addAction(actionwidget)
-
-        self.show_types_button.setMenu(self.show_types_menu)
-        self.show_all_action.triggered.connect(self.set_checked_all)
+        viewport_output_layout.addWidget(show_button)
+        viewport_output_layout.addWidget(self.override_viewport)
         # endregion Show
 
+        # region Checkboxes
+        ## Remove setChecked(bool) of widgets to enswure ini file can
+        ## take over, testings this atm
         self.high_quality = QtWidgets.QCheckBox()
-        self.high_quality.setChecked(True)
         self.high_quality.setText("\t\t\t HQ: Viewport 2.0 + AA")
         self.use_isolate_view = QtWidgets.QCheckBox("Use isolate view from "
                                                     "active panel")
-        self.use_isolate_view.setChecked(True)
         self.offscreen = QtWidgets.QCheckBox("Render offscreen")
         self.offscreen.setToolTip("Whether to the playblast view "
                                   "visually on- or off-screen during "
                                   "playblast")
 
-        self.offscreen.setChecked(True)
+        # endregion Checkboxes
 
-        self._layout.addWidget(self.show_types_button)
-        self._layout.addWidget(self.override_viewport)
+        self._layout.addLayout(viewport_output_layout)
         self._layout.addWidget(self.high_quality)
-        self._layout.addWidget(self.use_isolate_view)
         self._layout.addWidget(self.offscreen)
 
         # signals
+        self.connections()
+
+    def connections(self):
+        """Link actions to widgets"""
         self.use_isolate_view.stateChanged.connect(self.options_changed)
         self.high_quality.stateChanged.connect(self.options_changed)
         self.override_viewport.stateChanged.connect(self.options_changed)
+        self.override_viewport.stateChanged.connect(self.toggle_override)
 
-        self.override_viewport.stateChanged.connect(
-            self.high_quality.setEnabled)
+    def show_menu(self):
+        """
+        Build the menu to select which items are shown in the capture
+        :return: a QPushButton instance with a menu
+        :rtype: QtGui.QPushButton
+        """
 
-        # self.override_viewport.stateChanged.connect()
+        # create the menu button
+        self.show_types_button = QtWidgets.QPushButton("Show")
+        self.show_types_menu = QtWidgets.QMenu(self)
+        self.show_types_menu.setWindowTitle("Show")
+        self.show_types_button.setFixedWidth(150)
+        self.show_types_menu.setFixedWidth(150)
+        self.show_types_menu.setTearOffEnabled(True)
 
-    def set_checked_all(self):
+        # Show all check
+        self.toggle_all = QtWidgets.QAction(self.show_types_menu, text="All")
+        self.toggle_none = QtWidgets.QAction(self.show_types_menu, text="None")
+        self.show_types_menu.addAction(self.toggle_all)
+        self.show_types_menu.addAction(self.toggle_none)
+        self.show_types_menu.addSeparator()
+
+        # create checkbox for
+        for obj_type in OBJECT_TYPES:
+            # create checkbox for object type
+            action = QtWidgets.QAction(self.show_types_menu, text=obj_type)
+            action.setCheckable(True)
+            # add to menu and list of instances
+            self.show_types_list.append(action)
+            self.show_types_menu.addAction(action)
+
+        self.show_types_button.setMenu(self.show_types_menu)
+        self.toggle_all.triggered.connect(self.toggle_all_visbile)
+        self.toggle_none.triggered.connect(self.toggle_all_hide)
+
+        return self.show_types_button
+
+    def toggle_override(self):
+        """Enable or disable show menu when override is checked"""
+        state = self.override_viewport.isChecked()
+        self.show_types_button.setEnabled(state)
+        self.high_quality.setEnabled(state)
+
+    def toggle_all_visbile(self):
         """
         Set all object types off or on depending on the state
         :return: None
         """
-
-        state = self.show_all_action.isChecked()
         for objecttype in self.show_types_list:
-            objecttype.setChecked(state)
+            objecttype.setChecked(True)
 
-    def get_options(self):
+    def toggle_all_hide(self):
+        """
+        Set all object types off or on depending on the state
+        :return: None
+        """
+        for objecttype in self.show_types_list:
+            objecttype.setChecked(False)
+
+    def get_show_inputs(self):
+        """
+        Return checked state of show menu items
+        :return: 
+        """
+
+        show_inputs = {}
+        # get all checked objects
+        for action in self.show_types_list:
+            show_inputs[action.text()] = action.isChecked()
+
+        return show_inputs
+
+    def get_inputs(self):
+        """
+        Return the widget options
+        :return: dictionary with all the settings of the widgets 
+        """
+        inputs = {"high_quality": self.high_quality.isChecked(),
+                  "override_viewport_options": self.override_viewport.isChecked(),
+                  "use_isolate_view": self.use_isolate_view.isChecked(),
+                  "offscreen": self.offscreen.isChecked()}
+
+        inputs.update(self.get_show_inputs())
+
+        return inputs
+
+    def _copy_inputs(self, inputs):
+        self.inputs = inputs.copy()
+
+    def apply_inputs(self, inputs):
+        """
+        Apply the settings which can be adjust by the user or presets
+        :param inputs: a collection of settings
+        :type inputs: dict
+        
+        :return: None
+        """
+        # get input values directly from input given
+        override_viewport = inputs.get("override_viewport_options", True)
+        high_quality = inputs.get("high_quality", True)
+        use_isolate_view = inputs.get("use_isolate_view", False)
+        offscreen = inputs.get("offscreen", False)
+
+        self.high_quality.setChecked(high_quality)
+        self.override_viewport.setChecked(override_viewport)
+        self.show_types_button.setEnabled(override_viewport)
+        self.use_isolate_view.setChecked(use_isolate_view)
+        self.offscreen.setChecked(offscreen)
+
+        for action in self.show_types_list:
+            action.setChecked(inputs.get(action.text(), True))
+
+    def get_outputs(self):
+        """
+        Retrieve all settings of each available sub widgets
+        :return: 
+        """
+
+        outputs = dict()
 
         high_quality = self.high_quality.isChecked()
         override_viewport_options = self.override_viewport.isChecked()
-        use_isolate_view = self.use_isolate_view.isChecked()
         offscreen = self.offscreen.isChecked()
-
-        options = dict()
 
         # use settings from active panel
         panel = lib.get_active_editor()
         view = capture.parse_view(panel)
-        options.update(view)
-        options.pop("camera", None)
+        outputs.update(view)
+        outputs.pop("camera", None)
 
         # use active sound track
         scene = capture.parse_active_scene()
-        options['sound'] = scene['sound']
+        outputs['sound'] = scene['sound']
 
         # override default settings
-        options['show_ornaments'] = False
-        options['off_screen'] = offscreen
-        options['viewer'] = True    # always play video for now
+        outputs['show_ornaments'] = False
+        outputs['off_screen'] = offscreen
+        outputs['viewer'] = True    # always play video for now
 
         # override camera options
-        options['camera_options']['overscan'] = 1.0
-        options['camera_options']['displayFieldChart'] = False
-        options['camera_options']['displayFilmGate'] = False
-        options['camera_options']['displayFilmOrigin'] = False
-        options['camera_options']['displayFilmPivot'] = False
-        options['camera_options']['displayGateMask'] = False
-        options['camera_options']['displayResolution'] = False
-        options['camera_options']['displaySafeAction'] = False
-        options['camera_options']['displaySafeTitle'] = False
+        outputs['camera_options']['overscan'] = 1.0
+        outputs['camera_options']['displayFieldChart'] = False
+        outputs['camera_options']['displayFilmGate'] = False
+        outputs['camera_options']['displayFilmOrigin'] = False
+        outputs['camera_options']['displayFilmPivot'] = False
+        outputs['camera_options']['displayGateMask'] = False
+        outputs['camera_options']['displayResolution'] = False
+        outputs['camera_options']['displaySafeAction'] = False
+        outputs['camera_options']['displaySafeTitle'] = False
 
         # force viewport 2.0 and AA
         if override_viewport_options:
             if high_quality:
-                options['viewport_options']['rendererName'] = 'vp2Renderer'
-                options['viewport2_options']['multiSampleEnable'] = True
-                options['viewport2_options']['multiSampleCount'] = 8
+                outputs['viewport_options']['rendererName'] = 'vp2Renderer'
+            outputs['viewport2_options']['multiSampleEnable'] = True
+            outputs['viewport2_options']['multiSampleCount'] = 8
 
         # Exclude some default things you often don't want to see.
-        for obj in self.show_types_list:
-            options['viewport_options'][obj.text()] = obj.isChecked()
+        if self.override_viewport.isChecked:
+            for obj in self.show_types_list:
+                outputs['viewport_options'][obj.text()] = obj.isChecked()
+        else:
+            for obj in self.show_types_list:
+                outputs['viewport_options'][obj.text()] = True
 
-        # Get isolate view members of the panel
-        if use_isolate_view:
-            filter_set = cmds.modelEditor(panel, query=True, viewObjects=True)
-            isolate = cmds.sets(filter_set, query=True) if filter_set else None
-            options['isolate'] = isolate
+        return outputs
 
-        return options
+    def _store_widget_inputs(self):
+        self.inputs.update(self.get_show_inputs())
+
+    def closeEvent(self, event):
+        self._store_widget_inputs()
+        event.accept()
 
 
-class PresetWidget(OptionsPlugin):
+class RendererWidget(OptionsPlugin):
 
-    label = "Presets"
-    presetfile = None
-    preferences = None
+    label = "Renderer"
 
     def __init__(self, parent=None):
         OptionsPlugin.__init__(self, parent=parent)
 
-        self.option_widgets = []
-
-        self._layout = QtWidgets.QHBoxLayout()
-        self._layout.setAlignment(QtCore.Qt.AlignCenter)
-        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout = QtWidgets.QVBoxLayout()
         self.setLayout(self._layout)
 
-        self.preset_list = QtWidgets.QComboBox()
-        self.preset_list.setMinimumWidth(200)
+        # Create list of renderers
+        self.renderers = QtWidgets.QComboBox()
+        self.renderers.addItems(self.get_renderers())
+        self.use_isolate_view = QtWidgets.QCheckBox("Use Isolate View")
 
-        # Icons
-        save_icon = self.style().standardIcon(getattr(QtWidgets.QStyle,
-                                                      "SP_DriveFDIcon"))
-        load_icon = self.style().standardIcon(getattr(QtWidgets.QStyle,
-                                                      "SP_DirOpenIcon"))
-        custom_icon = self.style().standardIcon(getattr(QtWidgets.QStyle,
-                                                        "SP_FileDialogListView"))
+        self._layout.addWidget(self.renderers)
+        self._layout.addWidget(self.use_isolate_view)
 
-        # Create buttons
-        self.preset_save = QtWidgets.QPushButton()
-        self.preset_save.setIcon(save_icon)
-        self.preset_save.setFixedWidth(30)
+    def get_renderers(self):
+        active_editor = lib.get_active_editor()
+        return cmds.modelEditor(active_editor, query=True, rendererList=True)
 
-        self.preset_load = QtWidgets.QPushButton()
-        self.preset_load.setIcon(load_icon)
-        self.preset_load.setFixedWidth(30)
-
-        self.preset_customize = QtWidgets.QPushButton()
-        self.preset_customize.setIcon(custom_icon)
-        self.preset_customize.setFixedWidth(30)
-
-        self._layout.addWidget(self.preset_list)
-        self._layout.addWidget(self.preset_save)
-        self._layout.addWidget(self.preset_load)
-        self._layout.addWidget(self.preset_customize)
-
-        self.preset_load.clicked.connect(self.load_presets)
-        self.preset_customize.clicked.connect(self.open_preset_dialog)
-
-    def load_presets(self):
-        filters = "Text file (*.json)"
-        filename, _ = QtWidgets.QFileDialog.getOpenFileName(self,
-                                                            "Open preference file",
-                                                            "/home",
-                                                            filters)
-
-        with open(filename, "r") as f:
-            self.presetfile = filename
-            self.preferences = json.loads(f)
-
-    def open_preset_dialog(self):
-        """Launch the preset editor"""
-
-        settings_dialog = QtWidgets.QDialog(self)
-        settings_dialog.setWindowTitle(self.label)
-        settings_dialog.setModal(True)
-
-        widget_layout = QtWidgets.QVBoxLayout()
-        for widget in [CodecWidget, OptionsWidget]:
-            widget_instance = widget()
-            group = self._create_group(widget.label, widget_instance)
-            widget_layout.addWidget(group)
-            self.option_widgets.append(widget_instance)
-
-        # Basic buttons
-        button_layout = QtWidgets.QHBoxLayout()
-        applybutton = QtWidgets.QPushButton("Apply")
-        cancelbutton = QtWidgets.QPushButton("Cancel")
-        button_layout.addWidget(applybutton)
-        button_layout.addWidget(cancelbutton)
-        widget_layout.addLayout(button_layout)
-        settings_dialog.setLayout(widget_layout)
-
-        applybutton.clicked.connect(self.save_settings)
-        cancelbutton.clicked.connect(settings_dialog.close)
-
-        settings_dialog.show()
-
-    def read_settings(self):
+    def get_outputs(self):
         """
-        Read out the settings of each widget to store in the json
-        :return: 
+        Get widget current inputs
+        :return: collection if current inputs
+        :rtype: dict
         """
+        outputs = {"rendererName": self.renderers.currentText()}
+        if self.use_isolate_view.isChecked:
+            panel = lib.get_active_editor()
+            filter_set = cmds.modelEditor(panel, query=True, viewObjects=True)
+            isolate = cmds.sets(filter_set, query=True) if filter_set else None
+            outputs["isolate"] = isolate
 
-        settings = {}
-        for widget in self.option_widgets:
-            options = widget.get_options()
-            settings[widget.label] = options
+        return outputs
 
-        return settings
-
-    def save_settings(self):
+    def apply_inputs(self, settings):
         """
-        Store the settings in a json file
+        Apply previous settings or settings from a preset
         
-        :param settings: the new configuration which needs to be stored
+        :param settings: collection if inputs
         :type settings: dict
         
-        :return: full filename of the json file
-        :rtype: str
+        :return: 
         """
+        # get values from settings
+        isolate = settings.get("isolate", False)
+        renderer = settings.get("rendererName", "vp2Renderer")
 
-        filters = "Text file (*.json)"
-        filename, _ = QtWidgets.QFileDialog.getSaveFileName(self,
-                                                            "Save preferences",
-                                                            self.presetfile,
-                                                            filters)
-        if not filename:
-            return
-
-        with open(filename, "w+") as f:
-            f.write(json.dumps(self.read_settings()))
-
-    def _create_group(self, label, widget):
-
-        groupbox = QtWidgets.QGroupBox(label)
-        groupbox_layout = QtWidgets.QVBoxLayout()
-        groupbox_layout.addWidget(widget)
-        groupbox.setLayout(groupbox_layout)
-
-        return groupbox
-
-    def process_presets(self):
-        pass
+        # apply settings in widget
+        self.renderers.setCurrentIndex(self.renderers.findText(renderer))
+        self.use_isolate_view.setChecked(isolate)
 
 
 class TimeWidget(OptionsPlugin):
@@ -714,7 +774,7 @@ class TimeWidget(OptionsPlugin):
             self.start.setEnabled(True)
             self.end.setEnabled(True)
 
-    def get_options(self, panel=""):
+    def get_outputs(self, panel=""):
         """
         Get the options of the Time Widget
         :param panel: 
@@ -738,4 +798,18 @@ class TimeWidget(OptionsPlugin):
         return {"start_frame": start,
                 "end_frame": end}
 
+    def get_inputs(self):
+        return {"time": self.mode.currentText(),
+                "start_frame": self.start.value(),
+                "end_frame": self.end.value()}
 
+    def apply_inputs(self, settings):
+        # get values
+        mode = self.mode.findText(settings.get("mode", self.RangeTimeSlider))
+        startframe = settings.get("start_frame", 1)
+        endframe = settings.get("end_frame", 120)
+
+        # set values
+        self.mode.setCurrentIndex(mode)
+        self.start.setValue(int(startframe))
+        self.end.setValue(int(endframe))

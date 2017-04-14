@@ -1,15 +1,16 @@
 # TODO : Add trigger for widgets when accordion is unfolded
-
+import json
 import logging
 import os
 import tempfile
+
 import capture
 
 from .vendor.Qt import QtCore, QtWidgets, QtGui
-
 import maya.cmds as cmds
 from . import lib
 from . import widgets
+
 
 log = logging.getLogger(__name__)
 
@@ -630,53 +631,6 @@ class AccordionWidget(QtGui.QScrollArea):
     pyBoxedMode = QtCore.Property('bool', isBoxedMode, setBoxedMode)
 
 
-class Separator(QtWidgets.QFrame):
-    """A horizontal line separator looking like a Maya separator"""
-
-    def __init__(self):
-        super(Separator, self).__init__()
-        self.setFrameShape(QtWidgets.QFrame.HLine)
-        self.setFrameShadow(QtWidgets.QFrame.Sunken)
-
-
-class SeparatorHeader(QtWidgets.QWidget):
-    """A label with a separator line to the right side of it."""
-
-    def __init__(self, header=None, parent=None):
-        super(SeparatorHeader, self).__init__(parent=parent)
-
-        layout = QtWidgets.QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-        self.setLayout(layout)
-
-        if header is None:
-            header = ""
-
-        label = QtWidgets.QLabel(header)
-        font = QtGui.QFont()
-        font.setBold(True)
-        font.setPointSize(8)
-
-        # We disable the label so it becomes Maya's grayed out darker
-        # color without overriding the stylesheet so we can rely as much
-        # on the styling of Maya as possible.
-        label.setEnabled(False)
-
-        label.setFont(font)
-        label.setContentsMargins(0, 0, 0, 0)
-        label.setSizePolicy(QtWidgets.QSizePolicy.Maximum,
-                            QtWidgets.QSizePolicy.Maximum)
-
-        separator = Separator()
-        separator.setContentsMargins(0, 0, 0, 0)
-
-        layout.addWidget(label)
-        layout.addWidget(separator)
-
-        self.label = label
-
-
 class ClickLabel(QtWidgets.QLabel):
     """A QLabel that emits a clicked signal when clicked upon."""
     clicked = QtCore.Signal()
@@ -687,12 +641,12 @@ class ClickLabel(QtWidgets.QLabel):
 
 
 class PreviewWidget(QtWidgets.QWidget):
-    """The playblast image preview widget.
+    """
+    The playblast image preview widget.
 
     Upon refresh it will retrieve the options through the function set as
     `options_getter` and make a call to `capture.capture()` for a single
     frame (playblasted) snapshot. The result is displayed as image.
-
     """
 
     def __init__(self, options_getter, parent=None):
@@ -717,6 +671,8 @@ class PreviewWidget(QtWidgets.QWidget):
         self.refresh()
 
     def refresh(self):
+        """Refresh the playblast preview"""
+
         frame = cmds.currentTime(query=True)
 
         # When playblasting outside of an undo queue it seems that undoing
@@ -751,7 +707,98 @@ class PreviewWidget(QtWidgets.QWidget):
             os.remove(fname)
 
 
+class PresetWidget(QtWidgets.QWidget):
+    """
+    Preset WIdget
+
+    Allows the user to set preferences and create presets to load before 
+    capturing
+
+    """
+
+    label = "Presets"
+
+    def __init__(self, parent=None):
+        QtWidgets.QWidget.__init__(self, parent=parent)
+
+        self.option_widgets = []
+
+        self._layout = QtWidgets.QHBoxLayout()
+        self._layout.setAlignment(QtCore.Qt.AlignCenter)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self._layout)
+
+        self.preset_list = QtWidgets.QComboBox()
+        self.preset_list.setMinimumWidth(200)
+
+        # adding test items
+        self.preset_list.addItems(["Custom *",
+                                   "Test Settings B",
+                                   "Test Settings C"])
+
+        # Icons
+        save_icon = self.style().standardIcon(getattr(QtWidgets.QStyle,
+                                                      "SP_DriveFDIcon"))
+        load_icon = self.style().standardIcon(getattr(QtWidgets.QStyle,
+                                                      "SP_DirOpenIcon"))
+        config_icon = self.style().standardIcon(getattr(QtWidgets.QStyle,
+                                                        "SP_FileDialogListView"))
+
+        # Create buttons
+        self.preset_save = QtWidgets.QPushButton()
+        self.preset_save.setIcon(save_icon)
+        self.preset_save.setFixedWidth(30)
+
+        self.preset_load = QtWidgets.QPushButton()
+        self.preset_load.setIcon(load_icon)
+        self.preset_load.setFixedWidth(30)
+
+        self.preset_config = QtWidgets.QPushButton()
+        self.preset_config.setIcon(config_icon)
+        self.preset_config.setFixedWidth(30)
+
+        self._layout.addWidget(self.preset_list)
+        self._layout.addWidget(self.preset_save)
+        self._layout.addWidget(self.preset_load)
+        self._layout.addWidget(self.preset_config)
+
+    def load_presets(self):
+        """Load preset files to override output values"""
+
+        filters = "Text file (*.json)"
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(self,
+                                                            "Open preference file",
+                                                            "/home",
+                                                            filters)
+        if not filename:
+            return
+
+        with open(filename, "r") as f:
+            return json.load(f)
+
+    def apply_inputs(self, settings):
+        """
+        Apply saved settings of previous session
+
+        :param settings: collection of settings based on widget label
+        :type settings: dict
+
+        :return: None 
+        """
+        sorted_widgets = dict((widget.label, widget) for
+                              widget in self.option_widgets)
+
+        # iterate over the sorted widgets to apply the settings
+        for label, widget in sorted_widgets.items():
+            widget_settings = settings.get(label, None)
+            if widget_settings:
+                widget.apply_inputs(widget_settings)
+
+
 class App(QtWidgets.QWidget):
+    """
+    The main application in which the widgets are placed
+    """
 
     # Signals
     options_changed = QtCore.Signal(dict)
@@ -760,8 +807,15 @@ class App(QtWidgets.QWidget):
     def __init__(self, title, objectname, parent=None):
         QtWidgets.QWidget.__init__(self, parent=parent)
 
+        # Settings
+        self.settingfile = self._ensure_config_exist()
+        self._translated_settings = {}
+
         # Add attributes
+        # List of widgets used
+        self.presetwidget = None
         self.option_widgets = []
+        self.configuration_widgets = []
 
         # region Set Attributes
         self.setObjectName(objectname)
@@ -781,21 +835,29 @@ class App(QtWidgets.QWidget):
         self.widgetlibrary = AccordionWidget(self)
         self.widgetlibrary.setRolloutStyle(AccordionWidget.Maya)
 
-        # Add widgets
+        # Add separate widgets
         self.widgetlibrary.addItem("Preview",
-                                   PreviewWidget(self.get_options),
+                                   PreviewWidget(self.get_outputs),
                                    collapsed=True)
 
-        for widget in [widgets.PresetWidget, widgets.TimeWidget,
-                       widgets.CameraWidget, widgets.ScaleWidget]:
-            self.add_options_widget(widget)
+        self.presetwidget = PresetWidget()
+        self.widgetlibrary.addItem("Presets", self.presetwidget)
+
+        # add advanced configuration widgets
+        for widget in [widgets.CodecWidget, widgets.ViewportOptionWidget,
+                       widgets.RendererWidget]:
+            self.add_output_widget(widget, settings=True)
+
+        # add configuration widgets
+        for widget in [widgets.TimeWidget, widgets.CameraWidget,
+                       widgets.ScaleWidget]:
+            self.add_output_widget(widget)
 
         self.layout.addWidget(self.widgetlibrary)
 
+        # add standard buttons
         self.apply_button = QtWidgets.QPushButton("Capture")
         self.close_apply_button = QtWidgets.QPushButton("Capture And Close")
-
-        # add standard buttons
         self.default_buttons = QtWidgets.QHBoxLayout()
         self.default_buttons.setContentsMargins(5, 5, 5, 5)
         self.default_buttons.addWidget(self.apply_button)
@@ -803,15 +865,57 @@ class App(QtWidgets.QWidget):
 
         self.layout.addLayout(self.default_buttons)
 
-    def add_options_widget(self, plugin):
+        previous_inputs = self._read_widget_inputs()
+        self.apply_inputs(previous_inputs)
+
+        self.presetwidget.preset_config.clicked.connect(self.advanced_configuration)
+        self.presetwidget.preset_load.clicked.connect(self.apply_loaded_inputs)
+
+    def advanced_configuration(self):
+        """Show the advanced configuration"""
+
+        self.configuration_dialog = QtWidgets.QDialog(self)
+        self.configuration_dialog.setModal(True)
+
+        config_layout = QtWidgets.QVBoxLayout()
+        for widget in self.configuration_widgets:
+            groupwidget = QtWidgets.QGroupBox(widget.label)
+            group_layout = QtWidgets.QVBoxLayout()
+            group_layout.addWidget(widget)
+            groupwidget.setLayout(group_layout)
+            config_layout.addWidget(groupwidget)
+
+        self.configuration_dialog.setLayout(config_layout)
+        self.configuration_dialog.show()
+
+    def apply_loaded_inputs(self):
+        """
+        Load input settings from choosen file
+        :return: None
+        """
+        inputs = self.presetwidget.load_presets()
+        if not inputs:
+            return
+        self.apply_inputs(inputs)
+
+    def add_output_widget(self, plugin, settings=False):
         """Add and options widget plug-in to the App"""
+
         widget = plugin()
+
+        widget.options_changed.connect(self.on_widget_settings_changed)
+
+        if settings:
+            self.configuration_widgets.append(widget)
+            return
+
         if not widget.hidden:
             self.widgetlibrary.addItem(plugin.label, widget)
-        widget.options_changed.connect(self.on_widget_settings_changed)
+
+        # connect change behaviour
         self.option_widgets.append(widget)
 
-    def get_options(self):
+    def get_outputs(self):
         """
         Collect all options set of all the widgets listed in the in the
         option_widgets attribute of the main app
@@ -820,15 +924,95 @@ class App(QtWidgets.QWidget):
         :rtype: dict
         """
 
-        # panel = lib.get_active_editor()
-
         # Get settings from widgets
-        options = dict()
-        for widget in self.option_widgets:
-            options.update(widget.get_options())
+        outputs = dict()
+        for widget in self.option_widgets + self.configuration_widgets:
+            outputs.update(widget.get_outputs())
 
-        return options
+        return outputs
 
     def on_widget_settings_changed(self):
-        options = self.get_options()
-        self.options_changed.emit(options)
+        self.options_changed.emit(self.get_outputs)
+
+    def _ensure_config_exist(self):
+        """
+        Check if ini file exists in user's folder else create ini file to 
+        write to 
+        :return: filepath of the ini file
+        :rtype: unicode
+        """
+
+        userdir = os.path.expanduser("~")
+        capturegui_dir = os.path.join(userdir, "CaptureGUI")
+        capturegui_inputs = os.path.join(capturegui_dir, "capturegui.json")
+        if not os.path.exists(capturegui_dir):
+            os.makedirs(capturegui_dir)
+
+        if not os.path.isfile(capturegui_inputs):
+            config = open(capturegui_inputs, "w")
+            config.close()
+
+        return capturegui_inputs
+
+    def _store_widget_inputs(self):
+        """Store all used widget settings in the local json file"""
+
+        inputs = dict()
+        config_widgets = self.option_widgets + self.configuration_widgets
+        for widget in config_widgets:
+            settings = widget.get_inputs()
+            if not isinstance(settings, dict):
+                print("Settings are not a dictionary, "
+                      "function only supports dictionaries for now")
+                return
+
+            inputs[widget.label] = settings
+
+        with open(self.settingfile, "w") as f:
+            json.dump(inputs, f, sort_keys=True,
+                      indent=4, separators=(',', ': '))
+
+    def _read_widget_inputs(self):
+        """Read the stored widget inputs"""
+        inputs = {}
+        if not os.path.isfile(self.settingfile):
+            return inputs
+
+        try:
+            with open(self.settingfile, "r") as f:
+                inputs = json.load(f)
+        except ValueError as error:
+            log.error(str(error))
+
+        return inputs
+
+    def apply_inputs(self, inputs):
+        """
+        Apply all the settings of the widgets
+        
+        :param inputs: collection of input values based on the GUI
+        :type inputs: dict
+        
+        :return: None 
+        """
+        option_widgets = self.option_widgets + self.configuration_widgets
+        sorted_widgets = dict((widget.label, widget) for
+                              widget in option_widgets)
+
+        # iterate over the sorted widgets to apply the settings
+        for label, widget in sorted_widgets.items():
+            widget_inputs = inputs.get(label, None)
+            if not widget_inputs:
+                continue
+            widget.apply_inputs(widget_inputs)
+
+    # override close event to ensure the input are stored
+
+    def closeEvent(self, event):
+        """
+        Custom close event to write the settings
+        :param event: 
+        :return: 
+        """
+        self._store_widget_inputs()
+        event.accept()
