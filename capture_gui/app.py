@@ -11,7 +11,6 @@ import maya.cmds as cmds
 from . import lib
 from . import widgets
 
-
 log = logging.getLogger("Capture Gui")
 
 
@@ -819,6 +818,36 @@ class PresetWidget(QtWidgets.QWidget):
         self.preset_list.setCurrentIndex(item_index)
         self.preset_list.blockSignals(False)
 
+    def save_presets(self, inputs):
+        """Save inputs to a file"""
+
+        filters = "Text file (*.json)"
+        filename, _ = QtWidgets.QFileDialog.getSaveFileName(self,
+                                                            "Save preferences",
+                                                            "",
+                                                            filters)
+        if not filename:
+            return
+
+        with open(filename, "w") as f:
+            json.dump(inputs, f, sort_keys=True,
+                      indent=4, separators=(',', ': '))
+
+        return filename
+
+    def get_presets(self):
+        """Return all currently listed presets"""
+        configurations = [self.preset_list.itemText(i) for
+                          i in range(self.preset_list.count())]
+
+        return configurations
+
+    def get_preset(self, filename):
+        if filename not in self.get_presets():
+            self.preset_list.addItem(filename)
+        idx = self.preset_list.findText(filename)
+        self.preset_list.setCurrentIndex(idx)
+
     def apply_inputs(self, settings):
         """
         Apply saved settings of previous session
@@ -847,6 +876,8 @@ class App(QtWidgets.QWidget):
 
     options_changed = QtCore.Signal(dict)
     viewer_start = QtCore.Signal(dict)
+
+    # Attribues
 
     application_sections = ["config", "app"]
 
@@ -909,9 +940,13 @@ class App(QtWidgets.QWidget):
         self.apply_inputs(self._read_widget_inputs())
 
         # apply connections
-        self.presetwidget.preset_config.clicked.connect(self.advanced_configuration)
-        self.presetwidget.preset_load.clicked.connect(self.apply_imported_inputs)
-        self.presetwidget.preset_list.currentIndexChanged.connect(self.apply_loaded_inputs)
+        self.presetwidget.preset_config.clicked.connect(
+            self.advanced_configuration)
+        self.presetwidget.preset_load.clicked.connect(
+            self.apply_imported_inputs)
+        self.presetwidget.preset_save.clicked.connect(self.save_inputs)
+        self.presetwidget.preset_list.currentIndexChanged.connect(
+            self.apply_loaded_inputs)
 
     def _process_widget(self):
         """
@@ -922,7 +957,7 @@ class App(QtWidgets.QWidget):
 
         plugins = []
         for name in dir(widgets):
-            # ignore possible buildin imported classes
+            # ignore possible build in imported classes
             if not name[0].isupper():
                 continue
 
@@ -1052,9 +1087,10 @@ class App(QtWidgets.QWidget):
                       "function only supports dictionaries for now")
                 return
 
-            inputs[widget.label] = settings
+            inputs[widget.id] = settings
 
         with open(self.settingfile, "w") as f:
+            print("FILE : {}".format(f))
             json.dump(inputs, f, sort_keys=True,
                       indent=4, separators=(',', ': '))
 
@@ -1066,6 +1102,7 @@ class App(QtWidgets.QWidget):
 
         try:
             with open(self.settingfile, "r") as f:
+                print("FILE : {}".format(f))
                 inputs = json.load(f)
         except ValueError as error:
             log.error(str(error))
@@ -1082,16 +1119,22 @@ class App(QtWidgets.QWidget):
         :return: None 
         """
         option_widgets = self.option_widgets + self.configuration_widgets
-        sorted_widgets = dict((widget.label, widget) for
+        sorted_widgets = dict((widget.id, widget) for
                               widget in option_widgets)
 
         # iterate over the sorted widgets to apply the settings
-        for label, widget in sorted_widgets.items():
-            widget_inputs = inputs.get(label, None)
+        for widget_id, widget in sorted_widgets.items():
+            widget_inputs = inputs.get(widget_id, None)
             if not widget_inputs:
                 continue
             widget.apply_inputs(widget_inputs)
 
+    def save_inputs(self):
+        """Seve the inputs of all the assets"""
+        inputs = self.get_outputs()
+        filename = self.presetwidget.save_presets(inputs)
+
+        self.presetwidget.get_preset(filename)
     # override close event to ensure the input are stored
 
     def closeEvent(self, event):
@@ -1100,5 +1143,6 @@ class App(QtWidgets.QWidget):
         :param event: 
         :return: 
         """
+
         self._store_widget_inputs()
         event.accept()

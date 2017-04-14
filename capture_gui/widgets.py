@@ -35,6 +35,7 @@ class OptionsPlugin(QtWidgets.QWidget):
 
     """
 
+    id = ""
     label = ""
     section = ""
     hidden = False
@@ -81,7 +82,8 @@ class CameraWidget(OptionsPlugin):
     Allows to select a camera.
 
     """
-    label = "Camera"
+    id = "Camera"
+    label = ""
     section = "app"
 
     def __init__(self, parent=None):
@@ -189,7 +191,7 @@ class CameraWidget(OptionsPlugin):
     def on_update_label(self):
 
         cam = self.cameras.currentText()
-        cam = cam.rsplit("|", 1)[-1]    # ensure short name
+        cam = cam.rsplit("|", 1)[-1]  # ensure short name
         self.label = "Camera ({0})".format(cam)
 
         self.label_changed.emit(self.label)
@@ -201,7 +203,8 @@ class ScaleWidget(OptionsPlugin):
     Allows to set scale based on set of options.
 
     """
-    label = "Resolution"
+    id = "Resolution"
+    label = ""
     section = "app"
 
     scale_changed = QtCore.Signal()
@@ -385,7 +388,8 @@ class CodecWidget(OptionsPlugin):
     Allows to set format, compression and quality.
 
     """
-    label = "Codec"
+    id = "Codec"
+    label = ""
     section = "config"
 
     def __init__(self, parent=None):
@@ -467,7 +471,8 @@ class ViewportOptionWidget(OptionsPlugin):
     For now used to set some default values used internally at Colorbleed.
 
     """
-    label = "Viewport Options"
+    id = "Viewport Options"
+    label = ""
     section = "config"
 
     show_types_list = []
@@ -664,7 +669,7 @@ class ViewportOptionWidget(OptionsPlugin):
         # override default settings
         outputs['show_ornaments'] = False
         outputs['off_screen'] = offscreen
-        outputs['viewer'] = True    # always play video for now
+        outputs['viewer'] = True  # always play video for now
 
         # override camera options
         outputs['camera_options']['overscan'] = 1.0
@@ -710,7 +715,8 @@ class TimeWidget(OptionsPlugin):
 
     """
 
-    label = "Time Range"
+    id = "Time Range"
+    label = ""
     section = "app"
 
     RangeTimeSlider = "Time Slider"
@@ -753,10 +759,12 @@ class TimeWidget(OptionsPlugin):
         """
         # this avoid overriding the ids on re-run
         currentframe = om.MEventMessage.addEventCallback("timeChanged",
-                                                         self.on_mode_changed)
+                                                         lambda
+                                                             x: self.on_mode_changed())
 
         timerange = om.MEventMessage.addEventCallback("playbackRangeChanged",
-                                                      self.on_mode_changed)
+                                                      lambda
+                                                          x: self.on_mode_changed())
 
         self._event_callbacks.append(currentframe)
         self._event_callbacks.append(timerange)
@@ -766,7 +774,7 @@ class TimeWidget(OptionsPlugin):
         for callback in self._event_callbacks:
             om.MEventMessage.removeCallback(callback)
 
-    def on_mode_changed(self, currentframe=None):
+    def on_mode_changed(self):
         """
         Update the GUI when the user updated the time range or settings
         
@@ -779,12 +787,8 @@ class TimeWidget(OptionsPlugin):
         mode = self.mode.currentText()
         if mode == self.RangeTimeSlider:
             start, end = lib.get_time_slider_range()
-
             self.start.setEnabled(False)
-            self.start.setValue(start)
             self.end.setEnabled(False)
-            self.end.setValue(end)
-
             mode_values = int(start), int(end)
 
         elif mode == self.RangeStartEnd:
@@ -792,7 +796,9 @@ class TimeWidget(OptionsPlugin):
             self.end.setEnabled(True)
             mode_values = self.start.value(), self.end.value()
         else:
-            mode_values = currentframe or lib.get_current_frame()
+            self.start.setEnabled(False)
+            self.end.setEnabled(False)
+            mode_values = "({})".format(int(lib.get_current_frame()))
 
         # Update label
         self.label = "Time Range {}".format(mode_values)
@@ -814,6 +820,11 @@ class TimeWidget(OptionsPlugin):
         elif mode == self.RangeStartEnd:
             start = self.start.value()
             end = self.end.value()
+
+        elif mode == self.CurrentFrame:
+            frame = lib.get_current_frame()
+            start = frame
+            end = frame
 
         else:
             raise NotImplementedError("Unsupported time range mode: "
@@ -845,7 +856,8 @@ class TimeWidget(OptionsPlugin):
 
 class RendererWidget(OptionsPlugin):
 
-    label = "Renderer"
+    id = "Renderer"
+    label = ""
     section = "config"
 
     def __init__(self, parent=None):
