@@ -939,14 +939,27 @@ class App(QtWidgets.QWidget):
 
         self.apply_inputs(self._read_widget_inputs())
 
+        self.connections()
+
+    def connections(self):
+
+        # default actions
+        self.apply_button.clicked.connect(self.capture)
+        self.close_apply_button.clicked.connect(self.capture_close)
+
         # apply connections
-        self.presetwidget.preset_config.clicked.connect(
-            self.advanced_configuration)
-        self.presetwidget.preset_load.clicked.connect(
-            self.apply_imported_inputs)
+        self.presetwidget.preset_config.clicked.connect(self.advanced_configuration)
+        self.presetwidget.preset_load.clicked.connect(self.apply_imported_inputs)
         self.presetwidget.preset_save.clicked.connect(self.save_inputs)
-        self.presetwidget.preset_list.currentIndexChanged.connect(
-            self.apply_loaded_inputs)
+        self.presetwidget.preset_list.currentIndexChanged.connect(self.apply_loaded_inputs)
+
+    def capture(self):
+        options = self.get_outputs()
+        capture.capture(options)
+
+    def capture_close(self):
+        self.capture()
+        self.close()
 
     def _process_widget(self):
         """
@@ -1135,6 +1148,7 @@ class App(QtWidgets.QWidget):
         filename = self.presetwidget.save_presets(inputs)
 
         self.presetwidget.get_preset(filename)
+
     # override close event to ensure the input are stored
 
     def closeEvent(self, event):
