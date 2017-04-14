@@ -3,6 +3,7 @@ import math
 from functools import partial
 
 import maya.cmds as cmds
+import maya.OpenMaya as om
 from .vendor.Qt import QtCore, QtWidgets
 import capture
 
@@ -35,8 +36,10 @@ class OptionsPlugin(QtWidgets.QWidget):
     """
 
     label = ""
+    section = ""
     hidden = False
     options_changed = QtCore.Signal()
+    label_changed = QtCore.Signal(str)
 
     def get_outputs(self):
         """Return the options as set in this plug-in widget.
@@ -79,6 +82,7 @@ class CameraWidget(OptionsPlugin):
 
     """
     label = "Camera"
+    section = "app"
 
     def __init__(self, parent=None):
         super(CameraWidget, self).__init__(parent=parent)
@@ -106,6 +110,10 @@ class CameraWidget(OptionsPlugin):
         self.refresh.clicked.connect(self.on_refresh)
 
         self.cameras.currentIndexChanged.connect(self.options_changed)
+        self.options_changed.connect(self.on_update_label)
+
+        # Force update of the label
+        self.on_update_label()
 
     def set_active_cam(self):
         cam = lib.get_current_camera()
@@ -155,7 +163,7 @@ class CameraWidget(OptionsPlugin):
         if camera is None:
             index = self.cameras.currentIndex()
             if index != -1:
-                camera = self.cameras.currentTetxt()
+                camera = self.cameras.currentText()
 
         self.cameras.blockSignals(True)
 
@@ -178,6 +186,14 @@ class CameraWidget(OptionsPlugin):
             idx = self.cameras.currentIndex()
             self.cameras.currentIndexChanged.emit(idx)
 
+    def on_update_label(self):
+
+        cam = self.cameras.currentText()
+        cam = cam.rsplit("|", 1)[-1]    # ensure short name
+        self.label = "Camera ({0})".format(cam)
+
+        self.label_changed.emit(self.label)
+
 
 class ScaleWidget(OptionsPlugin):
     """Scale widget.
@@ -186,6 +202,7 @@ class ScaleWidget(OptionsPlugin):
 
     """
     label = "Resolution"
+    section = "app"
 
     scale_changed = QtCore.Signal()
 
@@ -212,19 +229,25 @@ class ScaleWidget(OptionsPlugin):
         self.resolution.setContentsMargins(0, 0, 0, 0)
         resolution_layout = QtWidgets.QHBoxLayout()
         resolution_layout.setContentsMargins(0, 0, 0, 0)
-        resolution_layout.setSpacing(0)
+        resolution_layout.setSpacing(6)
 
         self.resolution.setLayout(resolution_layout)
+        width_label = QtWidgets.QLabel("Width")
+        width_label.setFixedWidth(40)
         self.width = QtWidgets.QSpinBox()
         self.width.setMinimum(0)
         self.width.setMaximum(99999)
         self.width.setValue(1920)
+        heigth_label = QtWidgets.QLabel("Height")
+        heigth_label.setFixedWidth(40)
         self.height = QtWidgets.QSpinBox()
         self.height.setMinimum(0)
         self.height.setMaximum(99999)
         self.height.setValue(1080)
 
+        resolution_layout.addWidget(width_label)
         resolution_layout.addWidget(self.width)
+        resolution_layout.addWidget(heigth_label)
         resolution_layout.addWidget(self.height)
 
         self.scale_result = QtWidgets.QLineEdit()
@@ -279,14 +302,22 @@ class ScaleWidget(OptionsPlugin):
             self.height.setEnabled(True)
             self.resolution.show()
 
+    def _get_output_resolution(self):
+
+        options = self.get_outputs()
+        return int(options["width"]), int(options["height"])
+
     def on_scale_changed(self):
         """Update the resulting resolution label"""
 
-        options = self.get_outputs()
-        label = "Result: {0}x{1}".format(int(options["width"]),
-                                         int(options["height"]))
+        width, height = self._get_output_resolution()
+        label = "Result: {0}x{1}".format(width, height)
 
         self.scale_result.setText(label)
+
+        # Update label
+        self.label = "Resolution ({0}x{1})".format(width, height)
+        self.label_changed.emit(self.label)
 
     def get_outputs(self):
         """Return width x height defined by the combination of settings
@@ -355,6 +386,7 @@ class CodecWidget(OptionsPlugin):
 
     """
     label = "Codec"
+    section = "config"
 
     def __init__(self, parent=None):
         super(CodecWidget, self).__init__(parent=parent)
@@ -436,6 +468,8 @@ class ViewportOptionWidget(OptionsPlugin):
 
     """
     label = "Viewport Options"
+    section = "config"
+
     show_types_list = []
 
     def __init__(self, parent=None):
@@ -668,61 +702,6 @@ class ViewportOptionWidget(OptionsPlugin):
         event.accept()
 
 
-class RendererWidget(OptionsPlugin):
-
-    label = "Renderer"
-
-    def __init__(self, parent=None):
-        OptionsPlugin.__init__(self, parent=parent)
-
-        self._layout = QtWidgets.QVBoxLayout()
-        self.setLayout(self._layout)
-
-        # Create list of renderers
-        self.renderers = QtWidgets.QComboBox()
-        self.renderers.addItems(self.get_renderers())
-        self.use_isolate_view = QtWidgets.QCheckBox("Use Isolate View")
-
-        self._layout.addWidget(self.renderers)
-        self._layout.addWidget(self.use_isolate_view)
-
-    def get_renderers(self):
-        active_editor = lib.get_active_editor()
-        return cmds.modelEditor(active_editor, query=True, rendererList=True)
-
-    def get_outputs(self):
-        """
-        Get widget current inputs
-        :return: collection if current inputs
-        :rtype: dict
-        """
-        outputs = {"rendererName": self.renderers.currentText()}
-        if self.use_isolate_view.isChecked:
-            panel = lib.get_active_editor()
-            filter_set = cmds.modelEditor(panel, query=True, viewObjects=True)
-            isolate = cmds.sets(filter_set, query=True) if filter_set else None
-            outputs["isolate"] = isolate
-
-        return outputs
-
-    def apply_inputs(self, settings):
-        """
-        Apply previous settings or settings from a preset
-        
-        :param settings: collection if inputs
-        :type settings: dict
-        
-        :return: 
-        """
-        # get values from settings
-        isolate = settings.get("isolate", False)
-        renderer = settings.get("rendererName", "vp2Renderer")
-
-        # apply settings in widget
-        self.renderers.setCurrentIndex(self.renderers.findText(renderer))
-        self.use_isolate_view.setChecked(isolate)
-
-
 class TimeWidget(OptionsPlugin):
     """Widget for time based options
 
@@ -732,19 +711,25 @@ class TimeWidget(OptionsPlugin):
     """
 
     label = "Time Range"
+    section = "app"
 
     RangeTimeSlider = "Time Slider"
     RangeStartEnd = "Start/End"
+    CurrentFrame = "CurrentFrame"
 
     def __init__(self, parent=None):
         super(TimeWidget, self).__init__(parent=parent)
+
+        self._event_callbacks = list()
 
         self._layout = QtWidgets.QHBoxLayout()
         self._layout.setContentsMargins(5, 0, 5, 0)
         self.setLayout(self._layout)
 
         self.mode = QtWidgets.QComboBox()
-        self.mode.addItems([self.RangeTimeSlider, self.RangeStartEnd])
+        self.mode.addItems([self.RangeTimeSlider,
+                            self.RangeStartEnd,
+                            self.CurrentFrame])
 
         self.start = QtWidgets.QSpinBox()
         self.start.setRange(-sys.maxint, sys.maxint)
@@ -758,10 +743,40 @@ class TimeWidget(OptionsPlugin):
         self.on_mode_changed()  # force enabled state refresh
         self.mode.currentIndexChanged.connect(self.on_mode_changed)
 
-    def on_mode_changed(self):
+        self._register_callbacks()
+
+    def _register_callbacks(self):
+        """
+        Register callbacks to ensure Capture GUI reacts to changes in
+        the Maya GUI in regards to time slider and current frame
+        :return: None
+        """
+        # this avoid overriding the ids on re-run
+        currentframe = om.MEventMessage.addEventCallback("timeChanged",
+                                                         self.on_mode_changed)
+
+        timerange = om.MEventMessage.addEventCallback("playbackRangeChanged",
+                                                      self.on_mode_changed)
+
+        self._event_callbacks.append(currentframe)
+        self._event_callbacks.append(timerange)
+
+    def _remove_callbacks(self):
+        """Remove callbacks when closing widget"""
+        for callback in self._event_callbacks:
+            om.MEventMessage.removeCallback(callback)
+
+    def on_mode_changed(self, currentframe=None):
+        """
+        Update the GUI when the user updated the time range or settings
+        
+        :param currentframe: frame number when time has been changed
+        :type currentframe: float
+        
+        :return: None 
+        """
 
         mode = self.mode.currentText()
-
         if mode == self.RangeTimeSlider:
             start, end = lib.get_time_slider_range()
 
@@ -770,9 +785,18 @@ class TimeWidget(OptionsPlugin):
             self.end.setEnabled(False)
             self.end.setValue(end)
 
+            mode_values = int(start), int(end)
+
         elif mode == self.RangeStartEnd:
             self.start.setEnabled(True)
             self.end.setEnabled(True)
+            mode_values = self.start.value(), self.end.value()
+        else:
+            mode_values = currentframe or lib.get_current_frame()
+
+        # Update label
+        self.label = "Time Range {}".format(mode_values)
+        self.label_changed.emit(self.label)
 
     def get_outputs(self, panel=""):
         """
@@ -813,3 +837,63 @@ class TimeWidget(OptionsPlugin):
         self.mode.setCurrentIndex(mode)
         self.start.setValue(int(startframe))
         self.end.setValue(int(endframe))
+
+    def closeEvent(self, event):
+        self._remove_callbacks()
+        event.accept()
+
+
+class RendererWidget(OptionsPlugin):
+
+    label = "Renderer"
+    section = "config"
+
+    def __init__(self, parent=None):
+        OptionsPlugin.__init__(self, parent=parent)
+
+        self._layout = QtWidgets.QVBoxLayout()
+        self.setLayout(self._layout)
+
+        # Create list of renderers
+        self.renderers = QtWidgets.QComboBox()
+        self.renderers.addItems(self.get_renderers())
+        self.use_isolate_view = QtWidgets.QCheckBox("Use Isolate View")
+
+        self._layout.addWidget(self.renderers)
+        self._layout.addWidget(self.use_isolate_view)
+
+    def get_renderers(self):
+        active_editor = lib.get_active_editor()
+        return cmds.modelEditor(active_editor, query=True, rendererList=True)
+
+    def get_outputs(self):
+        """
+        Get widget current inputs
+        :return: collection if current inputs
+        :rtype: dict
+        """
+        outputs = {}
+        if self.use_isolate_view.isChecked:
+            panel = lib.get_active_editor()
+            filter_set = cmds.modelEditor(panel, query=True, viewObjects=True)
+            isolate = cmds.sets(filter_set, query=True) if filter_set else None
+            outputs["isolate"] = isolate
+
+        return outputs
+
+    def apply_inputs(self, settings):
+        """
+        Apply previous settings or settings from a preset
+        
+        :param settings: collection if inputs
+        :type settings: dict
+        
+        :return: 
+        """
+        # get values from settings
+        isolate = settings.get("isolate", False)
+        renderer = settings.get("rendererName", "vp2Renderer")
+
+        # apply settings in widget
+        self.renderers.setCurrentIndex(self.renderers.findText(renderer))
+        self.use_isolate_view.setChecked(isolate)

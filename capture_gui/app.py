@@ -1,4 +1,4 @@
-# TODO : Add trigger for widgets when accordion is unfolded
+import inspect
 import json
 import logging
 import os
@@ -12,11 +12,10 @@ from . import lib
 from . import widgets
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("Capture Gui")
 
 
 # Modification of Blur's Accordion Widget to include a Maya style.
-# Also got rid of the need for a pixmap and used QPolygon instead.
 
 class AccordionItem(QtGui.QGroupBox):
     trigger = QtCore.Signal(bool)
@@ -729,40 +728,40 @@ class PresetWidget(QtWidgets.QWidget):
         self.setLayout(self._layout)
 
         self.preset_list = QtWidgets.QComboBox()
-        self.preset_list.setMinimumWidth(200)
-
-        # adding test items
-        self.preset_list.addItems(["Custom *",
-                                   "Test Settings B",
-                                   "Test Settings C"])
+        self.preset_list.setFixedWidth(200)
+        self.preset_list.addItem("*")
 
         # Icons
-        save_icon = self.style().standardIcon(getattr(QtWidgets.QStyle,
-                                                      "SP_DriveFDIcon"))
-        load_icon = self.style().standardIcon(getattr(QtWidgets.QStyle,
-                                                      "SP_DirOpenIcon"))
-        config_icon = self.style().standardIcon(getattr(QtWidgets.QStyle,
-                                                        "SP_FileDialogListView"))
+        icon_path = os.path.dirname(__file__)
+        save_icon = os.path.join(icon_path, "save.png")
+        load_icon = os.path.join(icon_path, "import.png")
+        config_icon = os.path.join(icon_path, "config.png")
+        restore_icon = os.path.join(icon_path, "reset.png")
 
         # Create buttons
         self.preset_save = QtWidgets.QPushButton()
-        self.preset_save.setIcon(save_icon)
+        self.preset_save.setIcon(QtWidgets.QIcon(save_icon))
         self.preset_save.setFixedWidth(30)
 
         self.preset_load = QtWidgets.QPushButton()
-        self.preset_load.setIcon(load_icon)
+        self.preset_load.setIcon(QtWidgets.QIcon(load_icon))
         self.preset_load.setFixedWidth(30)
 
         self.preset_config = QtWidgets.QPushButton()
-        self.preset_config.setIcon(config_icon)
+        self.preset_config.setIcon(QtWidgets.QIcon(config_icon))
         self.preset_config.setFixedWidth(30)
+
+        self.preset_reset = QtWidgets.QPushButton()
+        self.preset_reset.setIcon(QtWidgets.QIcon(restore_icon))
+        self.preset_reset.setFixedWidth(30)
 
         self._layout.addWidget(self.preset_list)
         self._layout.addWidget(self.preset_save)
         self._layout.addWidget(self.preset_load)
         self._layout.addWidget(self.preset_config)
+        self._layout.addWidget(self.preset_reset)
 
-    def load_presets(self):
+    def import_preset(self):
         """Load preset files to override output values"""
 
         filters = "Text file (*.json)"
@@ -773,8 +772,52 @@ class PresetWidget(QtWidgets.QWidget):
         if not filename:
             return
 
-        with open(filename, "r") as f:
-            return json.load(f)
+        # create new entry in combobox
+        self.load_presets(filename)
+
+        # read file
+        return self.load()
+
+    def load(self):
+        """
+        Load a preset from the already listed preset
+        
+        :return: collection of preset inputs
+        :rtype: dict
+        """
+        filename = self.preset_list.currentText()
+        if filename == "*":
+            return {}
+
+        return lib.load_json(filename)
+
+    def load_presets(self, filename):
+        """
+        Add the filename to the preset list and set the index to the filename
+        :param filename: the filename of the preset loaded
+        :type filename: str
+        
+        :return: None 
+        """
+        self.preset_list.blockSignals(True)
+        item_index = 0
+        item_count = self.preset_list.count()
+        if item_count > 1:
+            current_items = [self.preset_list.itemText(i)
+                             for i in range(item_count)]
+
+            # get index of the item from the combobox
+            if filename not in current_items:
+                self.preset_list.addItem(filename)
+
+            item_index = self.preset_list.findText(filename)
+        else:
+            self.preset_list.addItem(filename)
+            item_index += 1
+
+        # select item
+        self.preset_list.setCurrentIndex(item_index)
+        self.preset_list.blockSignals(False)
 
     def apply_inputs(self, settings):
         """
@@ -801,8 +844,11 @@ class App(QtWidgets.QWidget):
     """
 
     # Signals
+
     options_changed = QtCore.Signal(dict)
     viewer_start = QtCore.Signal(dict)
+
+    application_sections = ["config", "app"]
 
     def __init__(self, title, objectname, parent=None):
         QtWidgets.QWidget.__init__(self, parent=parent)
@@ -844,13 +890,8 @@ class App(QtWidgets.QWidget):
         self.widgetlibrary.addItem("Presets", self.presetwidget)
 
         # add advanced configuration widgets
-        for widget in [widgets.CodecWidget, widgets.ViewportOptionWidget,
-                       widgets.RendererWidget]:
-            self.add_output_widget(widget, settings=True)
-
-        # add configuration widgets
-        for widget in [widgets.TimeWidget, widgets.CameraWidget,
-                       widgets.ScaleWidget]:
+        config_widget = self._process_widget()
+        for widget in config_widget:
             self.add_output_widget(widget)
 
         self.layout.addWidget(self.widgetlibrary)
@@ -865,11 +906,42 @@ class App(QtWidgets.QWidget):
 
         self.layout.addLayout(self.default_buttons)
 
-        previous_inputs = self._read_widget_inputs()
-        self.apply_inputs(previous_inputs)
+        self.apply_inputs(self._read_widget_inputs())
 
+        # apply connections
         self.presetwidget.preset_config.clicked.connect(self.advanced_configuration)
-        self.presetwidget.preset_load.clicked.connect(self.apply_loaded_inputs)
+        self.presetwidget.preset_load.clicked.connect(self.apply_imported_inputs)
+        self.presetwidget.preset_list.currentIndexChanged.connect(self.apply_loaded_inputs)
+
+    def _process_widget(self):
+        """
+        Get all the widgets from the widgets module
+        :return: list of filtered widgets
+        :rtype: list
+        """
+
+        plugins = []
+        for name in dir(widgets):
+            # ignore possible buildin imported classes
+            if not name[0].isupper():
+                continue
+
+            # skip private stuff
+            if name.startswith("_"):
+                continue
+
+            # check if part of module is a class
+            obj = getattr(widgets, name)
+            if not inspect.isclass(obj):
+                continue
+
+            # ignore the options plugin
+            if obj == widgets.OptionsPlugin:
+                continue
+
+            plugins.append(obj)
+
+        return plugins
 
     def advanced_configuration(self):
         """Show the advanced configuration"""
@@ -888,29 +960,40 @@ class App(QtWidgets.QWidget):
         self.configuration_dialog.setLayout(config_layout)
         self.configuration_dialog.show()
 
+    def apply_imported_inputs(self):
+        """Apply imported preset file"""
+
+        inputs = self.presetwidget.import_preset()
+        self.apply_inputs(inputs)
+
     def apply_loaded_inputs(self):
         """
         Load input settings from choosen file
         :return: None
         """
-        inputs = self.presetwidget.load_presets()
+        inputs = self.presetwidget.load()
         if not inputs:
             return
         self.apply_inputs(inputs)
 
-    def add_output_widget(self, plugin, settings=False):
-        """Add and options widget plug-in to the App"""
+    def add_output_widget(self, plugin):
+        """Add an options widget plug-in to the UI"""
+
+        if plugin.section not in self.application_sections:
+            log.warning("{}'s section is invalid: "
+                        "{}".format(plugin.label, plugin.section))
+            return
 
         widget = plugin()
-
         widget.options_changed.connect(self.on_widget_settings_changed)
 
-        if settings:
+        if widget.section == "config":
             self.configuration_widgets.append(widget)
             return
 
         if not widget.hidden:
-            self.widgetlibrary.addItem(plugin.label, widget)
+            item = self.widgetlibrary.addItem(widget.label, widget)
+            widget.label_changed.connect(item.setTitle)
 
         # connect change behaviour
         self.option_widgets.append(widget)
@@ -933,6 +1016,9 @@ class App(QtWidgets.QWidget):
 
     def on_widget_settings_changed(self):
         self.options_changed.emit(self.get_outputs)
+        self.presetwidget.preset_list.setCurrentIndex(1)
+
+    # configuration related functions
 
     def _ensure_config_exist(self):
         """

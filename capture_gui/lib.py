@@ -7,6 +7,7 @@ import subprocess
 import contextlib
 
 import maya.cmds as cmds
+import maya.OpenMaya as om
 import maya.mel as mel
 import capture
 
@@ -66,6 +67,10 @@ def get_active_editor():
     cmds.currentTime(cmds.currentTime(query=True))     # fixes `cmds.playblast` undo bug
     panel = cmds.playblast(activeEditor=True)
     return panel.split("|")[-1]
+
+
+def get_current_frame():
+    return cmds.currentTime(query=True)
 
 
 def get_time_slider_range(highlighted=True,
