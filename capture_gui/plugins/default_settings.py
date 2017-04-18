@@ -32,6 +32,7 @@ class DefaultOptionsPlugin(capture_gui.plugin.Plugin):
         outputs['viewer'] = True                # always play video for now
 
         # override camera options
+        outputs['camera_options'] = dict()
         outputs['camera_options']['overscan'] = 1.0
         outputs['camera_options']['displayFieldChart'] = False
         outputs['camera_options']['displayFilmGate'] = False
