@@ -18,20 +18,48 @@ class RendererWidget(capture_gui.plugin.Plugin):
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        self._renderers = self.get_renderers()
+
         # Create list of renderers
         self.renderers = QtWidgets.QComboBox()
-        self.renderers.addItems(self.get_renderers())
+        self.renderers.addItems(self._renderers.keys())
 
         layout.addWidget(self.renderers)
 
+        self.apply_inputs(self.get_defaults())
+
+    def get_current_renderer(self):
+        """Get current renderer by internal name (non-UI)
+        
+        Returns:
+            str: Name of renderer.
+            
+        """
+        renderer_ui = self.renderers.currentText()
+        renderer = self._renderers.get(renderer_ui, None)
+        if renderer is None:
+            raise RuntimeError("No valid renderer: {0}".format(renderer_ui))
+
+        return renderer
+
     def get_renderers(self):
         active_editor = lib.get_active_editor()
-        return cmds.modelEditor(active_editor, query=True, rendererList=True)
+        renderers_ui = cmds.modelEditor(active_editor, query=True, rendererListUI=True)
+        renderers_id = cmds.modelEditor(active_editor, query=True, rendererList=True)
+
+        renderers = dict(zip(renderers_ui, renderers_id))
+        renderers.pop("Stub Renderer")
+
+        return renderers
+
+    def get_defaults(self):
+        return {
+            "rendererName": "vp2Renderer"
+        }
 
     def get_inputs(self):
-
         return {
-            "rendererName": self.renderers.currentText()
+            "rendererName": self.get_current_renderer()
         }
 
     def get_outputs(self):
@@ -43,7 +71,7 @@ class RendererWidget(capture_gui.plugin.Plugin):
         """
         return {
             "viewport_options": {
-                "rendererName": self.renderers.currentText()
+                "rendererName": self.get_current_renderer()
             }
         }
 
@@ -58,6 +86,13 @@ class RendererWidget(capture_gui.plugin.Plugin):
             None
             
         """
+
+        reverse_lookup = {value: key for key, value in self._renderers.items()}
         renderer = inputs.get("renderer", "vp2Renderer")
-        index = self.renderers.findText(renderer)
-        self.renderers.setCurrentIndex(index)
+        renderer_ui = reverse_lookup.get(renderer)
+
+        if renderer_ui:
+            index = self.renderers.findText(renderer_ui)
+            self.renderers.setCurrentIndex(index)
+        else:
+            self.renderers.setCurrentIndex(1)
