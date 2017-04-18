@@ -438,7 +438,9 @@ class App(QtWidgets.QWidget):
     def _read_widget_configuration(self):
         """Read the stored widget inputs"""
         inputs = {}
-        if not os.path.isfile(self.settingfile):
+
+        if not os.path.isfile(self.settingfile) or \
+           os.stat(self.settingfile).st_size == 0:
             return inputs
 
         try:
