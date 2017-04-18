@@ -135,14 +135,20 @@ class PresetWidget(QtWidgets.QWidget):
         save = QtWidgets.QPushButton()
         save.setIcon(QtWidgets.QIcon(save_icon))
         save.setFixedWidth(30)
+        save.setToolTip("Save Preset")
+        save.setStatusTip("Save Preset")
 
         load = QtWidgets.QPushButton()
         load.setIcon(QtWidgets.QIcon(load_icon))
         load.setFixedWidth(30)
+        load.setToolTip("Load Preset")
+        save.setStatusTip("Load Preset")
 
         config = QtWidgets.QPushButton()
         config.setIcon(QtWidgets.QIcon(config_icon))
         config.setFixedWidth(30)
+        config.setToolTip("Preset configuration")
+        config.setStatusTip("Preset configuration")
 
         layout.addWidget(presets)
         layout.addWidget(save)
@@ -322,7 +328,7 @@ class App(QtWidgets.QWidget):
         self.presetwidget = PresetWidget()
         self.widgetlibrary.addItem("Presets", self.presetwidget)
 
-        # add advanced configuration widgets
+        # add plug-in widgets
         for widget in plugin.discover():
             self.add_plugin(widget)
 
@@ -362,6 +368,7 @@ class App(QtWidgets.QWidget):
 
         dialog = QtWidgets.QDialog(self)
         dialog.setModal(True)
+        #dialog.setWindowTitle("")
 
         config_layout = QtWidgets.QVBoxLayout()
         for widget in self.plugins["config"]:
