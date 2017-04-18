@@ -105,6 +105,12 @@ class ScaleWidget(capture_gui.plugin.Plugin):
         self.width.valueChanged.connect(self.on_scale_changed)
         self.height.valueChanged.connect(self.on_scale_changed)
 
+        # Connect options changed
+        self.mode.currentIndexChanged.connect(self.options_changed)
+        self.percent.valueChanged.connect(self.options_changed)
+        self.width.valueChanged.connect(self.options_changed)
+        self.height.valueChanged.connect(self.options_changed)
+
     def on_mode_changed(self):
         """Update the width/height enabled state when mode changes"""
 

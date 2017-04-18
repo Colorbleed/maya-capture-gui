@@ -103,6 +103,8 @@ class TimeWidget(capture_gui.plugin.Plugin):
         self.label = "Time Range {}".format(mode_values)
         self.label_changed.emit(self.label)
 
+        self.options_changed.emit()
+
     def get_outputs(self, panel=""):
         """
         Get the options of the Time Widget
