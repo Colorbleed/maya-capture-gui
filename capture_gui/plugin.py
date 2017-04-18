@@ -132,7 +132,7 @@ def register_plugin_path(path):
 
 
 def deregister_plugin_path(path):
-    """Remove a pyblish._registered_paths path
+    """Remove a _registered_paths path
 
     Raises:
         KeyError if `path` isn't registered
@@ -198,8 +198,7 @@ def plugin_paths():
 
     The sources are:
 
-    - Registered paths using :func:`register_plugin_path`,
-    - Paths from the environment variable `PYBLISHPLUGINPATH`
+    - Registered paths using :func:`register_plugin_path`
 
     Returns:
         list of paths in which plugins may be locat
@@ -220,12 +219,7 @@ def discover(paths=None):
     """Find and return available plug-ins
 
     This function looks for files within paths registered via
-    :func:`register_plugin_path` and those added to `PYBLISHPLUGINPATH`.
-
-    It determines *type* - :class:`Selector`, :class:`Validator`,
-    :class:`Extractor` or :class:`Conform` - based on whether it
-    matches it's corresponding regular expression; e.g.
-    "$validator_*^" for plug-ins of type Validator.
+    :func:`register_plugin_path`.
 
     Arguments:
         paths (list, optional): Paths to discover plug-ins from.
@@ -296,7 +290,7 @@ def plugins_from_module(module):
 
     Arguments:
         module (types.ModuleType): Imported module from which to
-            parse valid Pyblish plug-ins.
+            parse valid plug-ins.
 
     Returns:
         List of plug-ins, or empty list if none is found.
