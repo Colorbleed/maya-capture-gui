@@ -15,49 +15,49 @@ class RendererWidget(capture_gui.plugin.Plugin):
     def __init__(self, parent=None):
         super(RendererWidget, self).__init__(parent=parent)
 
-        self._layout = QtWidgets.QVBoxLayout()
-        self.setLayout(self._layout)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         # Create list of renderers
         self.renderers = QtWidgets.QComboBox()
         self.renderers.addItems(self.get_renderers())
-        self.use_isolate_view = QtWidgets.QCheckBox("Use Isolate View")
 
-        self._layout.addWidget(self.renderers)
-        self._layout.addWidget(self.use_isolate_view)
+        layout.addWidget(self.renderers)
 
     def get_renderers(self):
         active_editor = lib.get_active_editor()
         return cmds.modelEditor(active_editor, query=True, rendererList=True)
 
+    def get_inputs(self):
+
+        return {
+            "rendererName": self.renderers.currentText()
+        }
+
     def get_outputs(self):
+        """Get the plugin outputs that matches `capture.capture` arguments
+        
+        Returns:
+            dict: Plugin outputs
+            
         """
-        Get widget current inputs
-        :return: collection if current inputs
-        :rtype: dict
-        """
-        outputs = {}
-        if self.use_isolate_view.isChecked:
-            panel = lib.get_active_editor()
-            filter_set = cmds.modelEditor(panel, query=True, viewObjects=True)
-            isolate = cmds.sets(filter_set, query=True) if filter_set else None
-            outputs["isolate"] = isolate
+        return {
+            "viewport_options": {
+                "rendererName": self.renderers.currentText()
+            }
+        }
 
-        return outputs
-
-    def apply_inputs(self, settings):
+    def apply_inputs(self, inputs):
         """
         Apply previous settings or settings from a preset
 
-        :param settings: collection if inputs
-        :type settings: dict
+        Args:
+            inputs (dict): Plugin input settings
 
-        :return: 
+        Returns:
+            None
+            
         """
-        # get values from settings
-        isolate = settings.get("isolate", False)
-        renderer = settings.get("rendererName", "vp2Renderer")
-
-        # apply settings in widget
-        self.renderers.setCurrentIndex(self.renderers.findText(renderer))
-        self.use_isolate_view.setChecked(isolate)
+        renderer = inputs.get("renderer", "vp2Renderer")
+        index = self.renderers.findText(renderer)
+        self.renderers.setCurrentIndex(index)
