@@ -112,10 +112,10 @@ class PresetWidget(QtWidgets.QWidget):
 
     label = "Presets"
 
-    def __init__(self, parent=None):
+    def __init__(self, inputs_getter, parent=None):
         QtWidgets.QWidget.__init__(self, parent=parent)
 
-        self.option_widgets = []
+        self.inputs_getter = inputs_getter
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setAlignment(QtCore.Qt.AlignCenter)
@@ -161,7 +161,7 @@ class PresetWidget(QtWidgets.QWidget):
         self.presets = presets
 
         # Signals
-        save.clicked.connect(self.save_preset)
+        save.clicked.connect(self.on_save_preset)
         load.clicked.connect(self.import_preset)
         config.clicked.connect(self.config_opened)
         presets.currentIndexChanged.connect(self.load_active_preset)
@@ -181,7 +181,7 @@ class PresetWidget(QtWidgets.QWidget):
         self.add_preset(filename)
 
         # read file
-        return self.load()
+        return self.load_active_preset()
 
     def load_active_preset(self):
         """Load the active preset.
@@ -196,6 +196,7 @@ class PresetWidget(QtWidgets.QWidget):
         preset = lib.load_json(filename)
 
         # Emit preset load signal
+        log.debug("Emitting preset_loaded: {0}".format(filename))
         self.preset_loaded.emit(preset)
 
         return preset
@@ -243,6 +244,8 @@ class PresetWidget(QtWidgets.QWidget):
             json.dump(inputs, f, sort_keys=True,
                       indent=4, separators=(',', ': '))
 
+        self.add_preset(filename)
+
         return filename
 
     def get_presets(self):
@@ -252,22 +255,11 @@ class PresetWidget(QtWidgets.QWidget):
 
         return configurations
 
-    def apply_inputs(self, settings):
-        """Apply saved settings of previous session
+    def on_save_preset(self):
+        """Save the inputs of all the plugins in a preset."""
 
-        :param settings: collection of settings based on widget label
-        :type settings: dict
-
-        :return: None 
-        """
-        sorted_widgets = dict((widget.label, widget) for
-                              widget in self.option_widgets)
-
-        # iterate over the sorted widgets to apply the settings
-        for label, widget in sorted_widgets.items():
-            widget_settings = settings.get(label, None)
-            if widget_settings:
-                widget.apply_inputs(widget_settings)
+        inputs = self.inputs_getter()
+        self.save_preset(inputs)
 
 
 class App(QtWidgets.QWidget):
@@ -315,7 +307,7 @@ class App(QtWidgets.QWidget):
                                    PreviewWidget(self.get_outputs),
                                    collapsed=True)
 
-        self.presetwidget = PresetWidget()
+        self.presetwidget = PresetWidget(inputs_getter=self.get_inputs)
         self.widgetlibrary.addItem("Presets", self.presetwidget)
 
         # add plug-in widgets
@@ -328,7 +320,7 @@ class App(QtWidgets.QWidget):
         self.apply_button = QtWidgets.QPushButton("Capture")
         self.layout.addWidget(self.apply_button)
 
-        self.apply_inputs(self._read_widget_inputs())
+        self.apply_inputs(self._read_widget_configuration())
 
         # default actions
         self.apply_button.clicked.connect(self.capture)
@@ -336,7 +328,6 @@ class App(QtWidgets.QWidget):
         # signals and slots
         self.presetwidget.config_opened.connect(self.advanced_configuration)
         self.presetwidget.preset_loaded.connect(self.apply_inputs)
-        self.presetwidget.save.clicked.connect(self.save_preset)
 
     def capture(self):
         options = self.get_outputs()
@@ -398,10 +389,9 @@ class App(QtWidgets.QWidget):
         return outputs
 
     def on_widget_settings_changed(self):
+        """Set current preset to '*' on settings change"""
         self.options_changed.emit(self.get_outputs)
-        self.presetwidget.presets.setCurrentIndex(1)
-
-    # configuration related functions
+        self.presetwidget.presets.setCurrentIndex(0)
 
     def _ensure_config_exist(self):
         """Create the configuration file if it does not exist yet.
@@ -423,26 +413,17 @@ class App(QtWidgets.QWidget):
 
         return capturegui_inputs
 
-    def _store_widget_inputs(self):
+    def _store_widget_configuration(self):
         """Store all used widget settings in the local json file"""
 
-        inputs = dict()
-        config_widgets = self._get_plugin_widgets()
-        for widget in config_widgets:
-            settings = widget.get_inputs()
-            if not isinstance(settings, dict):
-                print("Settings are not a dictionary, "
-                      "function only supports dictionaries for now")
-                return
-
-            inputs[widget.id] = settings
+        inputs = self.get_inputs()
 
         with open(self.settingfile, "w") as f:
             log.debug("Writing JSON file: {0}".format(f))
             json.dump(inputs, f, sort_keys=True,
                       indent=4, separators=(',', ': '))
 
-    def _read_widget_inputs(self):
+    def _read_widget_configuration(self):
         """Read the stored widget inputs"""
         inputs = {}
         if not os.path.isfile(self.settingfile):
@@ -472,7 +453,7 @@ class App(QtWidgets.QWidget):
         return widgets
 
     def apply_inputs(self, inputs):
-        """Apply all the settings of the widgets
+        """Apply all the settings of the widgets.
         
         :param inputs: collection of input values based on the GUI
         :type inputs: dict
@@ -482,31 +463,34 @@ class App(QtWidgets.QWidget):
         if not inputs:
             return
 
-        sorted_widgets = dict((widget.id, widget) for
-                              widget in self._get_plugin_widgets())
-
-        # iterate over the sorted widgets to apply the settings
-        for widget_id, widget in sorted_widgets.items():
-            widget_inputs = inputs.get(widget_id, None)
-            if not widget_inputs:
-                continue
+        for widget in self._get_plugin_widgets():
+            widget_inputs = inputs.get(widget.id, None)
             widget.apply_inputs(widget_inputs)
 
-    def save_preset(self):
-        """Save the inputs of all the plugins in a preset"""
+    def get_inputs(self):
+        """Return the inputs per plug-in widgets by `plugin.id`.
+        
+        Returns:
+            dict: The inputs per widget
+        
+        """
 
-        inputs = self.get_outputs()
-        filename = self.presetwidget.save_preset(inputs)
-        self.presetwidget.add_preset(filename)
+        inputs = dict()
+        config_widgets = self._get_plugin_widgets()
+        for widget in config_widgets:
+            settings = widget.get_inputs()
+            if not isinstance(settings, dict):
+                print("Settings are not a dictionary, "
+                      "function only supports dictionaries for now")
+                return
+
+            inputs[widget.id] = settings
+
+        return inputs
 
     # override close event to ensure the input are stored
-
     def closeEvent(self, event):
-        """
-        Custom close event to write the settings
-        :param event: 
-        :return: 
-        """
+        """Store current configuration upon closing the application."""
 
-        self._store_widget_inputs()
+        self._store_widget_configuration()
         event.accept()
