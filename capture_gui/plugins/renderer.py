@@ -88,7 +88,7 @@ class RendererWidget(capture_gui.plugin.Plugin):
         """
 
         reverse_lookup = {value: key for key, value in self._renderers.items()}
-        renderer = inputs.get("renderer", "vp2Renderer")
+        renderer = inputs.get("rendererName", "vp2Renderer")
         renderer_ui = reverse_lookup.get(renderer)
 
         if renderer_ui:
