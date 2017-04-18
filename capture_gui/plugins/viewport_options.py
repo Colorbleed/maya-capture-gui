@@ -29,6 +29,7 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
 
     """
     id = "Viewport Options"
+    label = "Viewport Options"
     section = "config"
     order = 70
 

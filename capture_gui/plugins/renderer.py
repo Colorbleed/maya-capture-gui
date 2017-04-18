@@ -8,6 +8,7 @@ import capture_gui.plugin
 
 class RendererWidget(capture_gui.plugin.Plugin):
     id = "Renderer"
+    label = "Renderer"
     section = "config"
     order = 60
 

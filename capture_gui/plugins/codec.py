@@ -12,6 +12,7 @@ class CodecWidget(capture_gui.plugin.Plugin):
 
     """
     id = "Codec"
+    label = "Codec"
     section = "config"
     order = 50
 
