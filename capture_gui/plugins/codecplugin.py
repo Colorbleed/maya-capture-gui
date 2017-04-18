@@ -5,7 +5,7 @@ import capture_gui.lib as lib
 import capture_gui.plugin
 
 
-class CodecWidget(capture_gui.plugin.Plugin):
+class CodecPlugin(capture_gui.plugin.Plugin):
     """Codec widget.
 
     Allows to set format, compression and quality.
@@ -17,7 +17,7 @@ class CodecWidget(capture_gui.plugin.Plugin):
     order = 50
 
     def __init__(self, parent=None):
-        super(CodecWidget, self).__init__(parent=parent)
+        super(CodecPlugin, self).__init__(parent=parent)
 
         self._layout = QtWidgets.QHBoxLayout()
         self._layout.setContentsMargins(0, 0, 0, 0)

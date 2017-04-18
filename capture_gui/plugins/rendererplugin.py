@@ -6,14 +6,14 @@ import capture_gui.lib as lib
 import capture_gui.plugin
 
 
-class RendererWidget(capture_gui.plugin.Plugin):
+class RendererPlugin(capture_gui.plugin.Plugin):
     id = "Renderer"
     label = "Renderer"
     section = "config"
     order = 60
 
     def __init__(self, parent=None):
-        super(RendererWidget, self).__init__(parent=parent)
+        super(RendererPlugin, self).__init__(parent=parent)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

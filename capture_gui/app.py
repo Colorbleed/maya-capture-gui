@@ -32,6 +32,9 @@ class PreviewWidget(QtWidgets.QWidget):
     frame (playblasted) snapshot. The result is displayed as image.
     """
 
+    preview_width = 320
+    preview_height = 180
+
     def __init__(self, options_getter, parent=None):
         QtWidgets.QWidget.__init__(self, parent=parent)
 
@@ -39,8 +42,8 @@ class PreviewWidget(QtWidgets.QWidget):
         self.initialized = False
         self.options_getter = options_getter
         self.preview = ClickLabel()
-        self.preview.setFixedWidth(1280 / 4)
-        self.preview.setFixedHeight(720 / 4)
+        self.preview.setFixedWidth(self.preview_width)
+        self.preview.setFixedHeight(self.preview_height)
 
         # region Build
         self.layout = QtWidgets.QVBoxLayout()
@@ -72,8 +75,8 @@ class PreviewWidget(QtWidgets.QWidget):
             # override settings that are constants for the preview
             options = options.copy()
             options['complete_filename'] = os.path.join(tempdir, "temp.jpg")
-            options['width'] = 1280 / 4
-            options['height'] = 720 / 4
+            options['width'] = self.preview_width
+            options['height'] = self.preview_height
             options['viewer'] = False
             options['frame'] = frame
             options['off_screen'] = True
@@ -271,7 +274,7 @@ class App(QtWidgets.QWidget):
     options_changed = QtCore.Signal(dict)
     viewer_start = QtCore.Signal(dict)
 
-    # Attribues
+    # Attributes
     application_sections = ["config", "app"]
 
     def __init__(self, title, objectname, parent=None):
@@ -287,6 +290,7 @@ class App(QtWidgets.QWidget):
         # region Set Attributes
         self.setObjectName(objectname)
         self.setWindowTitle(title)
+        self.setMinimumWidth(400)
 
         # Set dialog window flags so the widget can be correctly parented
         # to Maya main window

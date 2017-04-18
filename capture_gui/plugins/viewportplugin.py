@@ -2,25 +2,29 @@ from capture_gui.vendor.Qt import QtCore, QtWidgets
 
 import capture_gui.plugin
 
-OBJECT_TYPES = ['ikHandles',
+OBJECT_TYPES = ['cameras',
+                'dimensions',
+                'grid',
+                'follicles',
+                'ikHandles',
+                'joints',
                 'locators',
                 'lights',
-                'joints',
                 'manipulators',
                 'nCloths',
-                'follicles',
-                'dimensions',
-                'nurbsCurves',
                 'nParticles',
                 'nRigids',
+                'nurbsCurves',
+                'nurbsSurfaces'
                 'pivots',
-                'grid',
+                'planes',
+                'polyMeshes',
                 'headsUpDisplay',
                 'strokes',
-                'cameras']
+                'subdivSurfaces']
 
 
-class ViewportOptionWidget(capture_gui.plugin.Plugin):
+class ViewportPlugin(capture_gui.plugin.Plugin):
     """Plugin to apply viewport visibilities and settings"""
     id = "Viewport Options"
     label = "Viewport Options"
@@ -28,7 +32,7 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
     order = 70
 
     def __init__(self, parent=None):
-        super(ViewportOptionWidget, self).__init__(parent=parent)
+        super(ViewportPlugin, self).__init__(parent=parent)
 
         self.show_types_list = list()
 

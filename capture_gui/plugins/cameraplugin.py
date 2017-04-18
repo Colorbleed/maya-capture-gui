@@ -5,7 +5,7 @@ import capture_gui.lib as lib
 import capture_gui.plugin
 
 
-class CameraWidget(capture_gui.plugin.Plugin):
+class CameraPlugin(capture_gui.plugin.Plugin):
     """Camera widget.
 
     Allows to select a camera.
@@ -16,7 +16,7 @@ class CameraWidget(capture_gui.plugin.Plugin):
     order = 10
 
     def __init__(self, parent=None):
-        super(CameraWidget, self).__init__(parent=parent)
+        super(CameraPlugin, self).__init__(parent=parent)
 
         self._layout = QtWidgets.QHBoxLayout()
         self._layout.setContentsMargins(5, 0, 5, 0)
