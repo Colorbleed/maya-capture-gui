@@ -7,7 +7,6 @@ import subprocess
 import contextlib
 
 import maya.cmds as cmds
-import maya.OpenMaya as om
 import maya.mel as mel
 import capture
 
