@@ -465,6 +465,9 @@ class App(QtWidgets.QWidget):
 
         for widget in self._get_plugin_widgets():
             widget_inputs = inputs.get(widget.id, None)
+            if not widget_inputs:
+                continue
+
             widget.apply_inputs(widget_inputs)
 
     def get_inputs(self):
@@ -478,13 +481,16 @@ class App(QtWidgets.QWidget):
         inputs = dict()
         config_widgets = self._get_plugin_widgets()
         for widget in config_widgets:
-            settings = widget.get_inputs()
-            if not isinstance(settings, dict):
-                print("Settings are not a dictionary, "
-                      "function only supports dictionaries for now")
+            widget_inputs = widget.get_inputs()
+            if not isinstance(widget_inputs, dict):
+                log.debug("Widget inputs are not a dictionary "
+                          "'{}': {}".format(widget.id, widget_inputs))
                 return
 
-            inputs[widget.id] = settings
+            if not widget_inputs:
+                continue
+
+            inputs[widget.id] = widget_inputs
 
         return inputs
 
