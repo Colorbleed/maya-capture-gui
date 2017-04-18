@@ -331,7 +331,7 @@ class App(QtWidgets.QWidget):
 
     def capture(self):
         options = self.get_outputs()
-        capture.capture(options)
+        capture.capture(**options)
 
     def advanced_configuration(self):
         """Show the advanced configuration"""
@@ -384,7 +384,19 @@ class App(QtWidgets.QWidget):
         # Get settings from widgets
         outputs = dict()
         for widget in self._get_plugin_widgets():
-            outputs.update(widget.get_outputs())
+
+            widget_outputs = widget.get_outputs()
+            if not widget_outputs:
+                continue
+
+            for key, value in widget_outputs.items():
+
+                # We merge dictionaries by updating them so we have
+                # the "mixed" values of both settings
+                if isinstance(value, dict) and key in outputs:
+                    outputs[key].update(value)
+                else:
+                    outputs[key] = value
 
         return outputs
 
