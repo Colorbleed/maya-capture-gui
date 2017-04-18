@@ -1,7 +1,5 @@
 from capture_gui.vendor.Qt import QtCore, QtWidgets
 
-import capture
-import capture_gui.lib as lib
 import capture_gui.plugin
 
 OBJECT_TYPES = ['ikHandles',
@@ -33,10 +31,10 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
     section = "config"
     order = 70
 
-    show_types_list = []
-
     def __init__(self, parent=None):
         super(ViewportOptionWidget, self).__init__(parent=parent)
+
+        self.show_types_list = list()
 
         self.setObjectName(self.label)
 
@@ -63,8 +61,6 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
         # endregion Show
 
         # region Checkboxes
-        ## Remove setChecked(bool) of widgets to enswure ini file can
-        ## take over, testings this atm
         self.high_quality = QtWidgets.QCheckBox()
         self.high_quality.setText("\t\t\t HQ: Viewport 2.0 + AA")
         self.use_isolate_view = QtWidgets.QCheckBox("Use isolate view from "
@@ -81,14 +77,10 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
         self._layout.addWidget(self.offscreen)
 
         # signals
-        self.connections()
-
-    def connections(self):
-        """Link actions to widgets"""
         self.use_isolate_view.stateChanged.connect(self.options_changed)
         self.high_quality.stateChanged.connect(self.options_changed)
         self.override_viewport.stateChanged.connect(self.options_changed)
-        self.override_viewport.stateChanged.connect(self.toggle_override)
+        self.override_viewport.stateChanged.connect(self.on_toggle_override)
 
     def show_menu(self):
         """
@@ -127,7 +119,7 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
 
         return self.show_types_button
 
-    def toggle_override(self):
+    def on_toggle_override(self):
         """Enable or disable show menu when override is checked"""
         state = self.override_viewport.isChecked()
         self.show_types_button.setEnabled(state)
@@ -176,9 +168,6 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
 
         return inputs
 
-    def _copy_inputs(self, inputs):
-        self.inputs = inputs.copy()
-
     def apply_inputs(self, inputs):
         """
         Apply the settings which can be adjust by the user or presets
@@ -214,53 +203,21 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
         override_viewport_options = self.override_viewport.isChecked()
         offscreen = self.offscreen.isChecked()
 
-        # use settings from active panel
-        panel = lib.get_active_editor()
-        view = capture.parse_view(panel)
-        outputs.update(view)
-        outputs.pop("camera", None)
-
-        # use active sound track
-        scene = capture.parse_active_scene()
-        outputs['sound'] = scene['sound']
-
-        # override default settings
-        outputs['show_ornaments'] = False
         outputs['off_screen'] = offscreen
-        outputs['viewer'] = True  # always play video for now
 
-        # override camera options
-        outputs['camera_options']['overscan'] = 1.0
-        outputs['camera_options']['displayFieldChart'] = False
-        outputs['camera_options']['displayFilmGate'] = False
-        outputs['camera_options']['displayFilmOrigin'] = False
-        outputs['camera_options']['displayFilmPivot'] = False
-        outputs['camera_options']['displayGateMask'] = False
-        outputs['camera_options']['displayResolution'] = False
-        outputs['camera_options']['displaySafeAction'] = False
-        outputs['camera_options']['displaySafeTitle'] = False
-
-        # force viewport 2.0 and AA
-        if override_viewport_options:
-            if high_quality:
-                outputs['viewport_options']['rendererName'] = 'vp2Renderer'
+        if override_viewport_options and high_quality:
+            # force viewport 2.0 and AA
+            outputs['viewport_options']['rendererName'] = 'vp2Renderer'
             outputs['viewport2_options']['multiSampleEnable'] = True
             outputs['viewport2_options']['multiSampleCount'] = 8
 
-        # Exclude some default things you often don't want to see.
-        if self.override_viewport.isChecked:
-            for obj in self.show_types_list:
-                outputs['viewport_options'][obj.text()] = obj.isChecked()
+        # Viewport visibility settings
+        if override_viewport_options:
+            show_per_type = self.get_show_inputs()
+            outputs.update(show_per_type)
         else:
             for obj in self.show_types_list:
                 outputs['viewport_options'][obj.text()] = True
 
         return outputs
-
-    def _store_widget_inputs(self):
-        self.inputs.update(self.get_show_inputs())
-
-    def closeEvent(self, event):
-        self._store_widget_inputs()
-        event.accept()
 
