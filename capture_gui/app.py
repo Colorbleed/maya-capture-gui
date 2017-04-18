@@ -368,7 +368,7 @@ class App(QtWidgets.QWidget):
 
         dialog = QtWidgets.QDialog(self)
         dialog.setModal(True)
-        #dialog.setWindowTitle("")
+        dialog.setWindowTitle("Capture - Preset Configuration")
 
         config_layout = QtWidgets.QVBoxLayout()
         for widget in self.plugins["config"]:
