@@ -8,8 +8,8 @@ import capture_gui.lib as lib
 import capture_gui.plugin
 
 
-class ScaleWidget(capture_gui.plugin.Plugin):
-    """Scale widget.
+class ResolutionWidget(capture_gui.plugin.Plugin):
+    """Resolution widget.
 
     Allows to set scale based on set of options.
 
@@ -18,14 +18,14 @@ class ScaleWidget(capture_gui.plugin.Plugin):
     section = "app"
     order = 20
 
-    scale_changed = QtCore.Signal()
+    resolution_changed = QtCore.Signal()
 
     ScaleWindow = "From Window"
     ScaleRenderSettings = "From Render Settings"
     ScaleCustom = "Custom"
 
     def __init__(self, parent=None):
-        super(ScaleWidget, self).__init__(parent=parent)
+        super(ResolutionWidget, self).__init__(parent=parent)
 
         self._layout = QtWidgets.QVBoxLayout()
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -96,14 +96,14 @@ class ScaleWidget(capture_gui.plugin.Plugin):
 
         # refresh states
         self.on_mode_changed()
-        self.on_scale_changed()
+        self.on_resolution_changed()
 
         # connect signals
         self.mode.currentIndexChanged.connect(self.on_mode_changed)
-        self.mode.currentIndexChanged.connect(self.on_scale_changed)
-        self.percent.valueChanged.connect(self.on_scale_changed)
-        self.width.valueChanged.connect(self.on_scale_changed)
-        self.height.valueChanged.connect(self.on_scale_changed)
+        self.mode.currentIndexChanged.connect(self.on_resolution_changed)
+        self.percent.valueChanged.connect(self.on_resolution_changed)
+        self.width.valueChanged.connect(self.on_resolution_changed)
+        self.height.valueChanged.connect(self.on_resolution_changed)
 
         # Connect options changed
         self.mode.currentIndexChanged.connect(self.options_changed)
@@ -128,7 +128,7 @@ class ScaleWidget(capture_gui.plugin.Plugin):
         options = self.get_outputs()
         return int(options["width"]), int(options["height"])
 
-    def on_scale_changed(self):
+    def on_resolution_changed(self):
         """Update the resulting resolution label"""
 
         width, height = self._get_output_resolution()

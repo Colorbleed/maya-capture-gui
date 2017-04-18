@@ -21,11 +21,7 @@ OBJECT_TYPES = ['ikHandles',
 
 
 class ViewportOptionWidget(capture_gui.plugin.Plugin):
-    """Widget for additional options
-
-    For now used to set some default values used internally at Colorbleed.
-
-    """
+    """Plugin to apply viewport visibilities and settings"""
     id = "Viewport Options"
     label = "Viewport Options"
     section = "config"
@@ -68,9 +64,11 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
         self.override_viewport.stateChanged.connect(self.on_toggle_override)
 
     def _build_show_menu(self):
-        """Build the menu to select which items are shown in the capture
-        :return: a QPushButton instance with a menu
-        :rtype: QtGui.QPushButton
+        """Build the menu to select which object types are shown in the output.
+        
+        Returns:
+            QtGui.QMenu: The visibilities "show" menu.
+            
         """
 
         menu = QtWidgets.QMenu(self)
@@ -194,4 +192,3 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
                 outputs['viewport_options'][obj.text()] = True
 
         return outputs
-

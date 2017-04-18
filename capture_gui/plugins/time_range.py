@@ -11,12 +11,7 @@ print capture_gui.lib
 
 
 class TimeWidget(capture_gui.plugin.Plugin):
-    """Widget for time based options
-
-    This does not emit options changed signals because the time settings does
-    not influence the visual representation of the preview snapshot.
-
-    """
+    """Widget for time based options"""
 
     id = "Time Range"
     section = "app"
