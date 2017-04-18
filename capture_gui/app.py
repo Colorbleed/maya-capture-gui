@@ -392,19 +392,17 @@ class App(QtWidgets.QWidget):
         widget = plugin()
         widget.options_changed.connect(self.on_widget_settings_changed)
 
-        if widget.section == "config":
-            self.plugins["config"].append(widget)
-            return
+        # Add to plug-ins in its section
+        self.plugins[widget.section].append(widget)
 
-        elif widget.section == "app":
+        # Implement additional settings depending on section
+        if widget.section == "app":
 
             if not widget.hidden:
                 item = self.widgetlibrary.addItem(widget.label, widget)
 
                 # connect label change behaviour
                 widget.label_changed.connect(item.setTitle)
-
-            self.plugins["app"].append(widget)
 
     def get_outputs(self):
         """Return the settings for a capture as currently set in the Application.
