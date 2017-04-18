@@ -41,83 +41,63 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
         self._layout = QtWidgets.QVBoxLayout()
         self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
-        viewport_output_layout = QtWidgets.QHBoxLayout()
         self.override_viewport = QtWidgets.QCheckBox("Override viewport "
                                                      "settings")
         self.override_viewport.setChecked(True)
 
-        # Visibility of object types
         # region Show
-        self.inputs = {}
+        self.show_types_button = QtWidgets.QPushButton("Show")
+        self.show_types_button.setFixedWidth(150)
+        self.show_types_menu = self._build_show_menu()
+        self.show_types_button.setMenu(self.show_types_menu)
 
-        self.show_types_button = None
-        self.show_types_menu = None
-        self.toggle_all = None
-        self.toggle_none = None
-        show_button = self.show_menu()
-
-        viewport_output_layout.addWidget(show_button)
-        viewport_output_layout.addWidget(self.override_viewport)
         # endregion Show
 
         # region Checkboxes
         self.high_quality = QtWidgets.QCheckBox()
-        self.high_quality.setText("\t\t\t HQ: Viewport 2.0 + AA")
-        self.use_isolate_view = QtWidgets.QCheckBox("Use isolate view from "
-                                                    "active panel")
-        self.offscreen = QtWidgets.QCheckBox("Render offscreen")
-        self.offscreen.setToolTip("Whether to the playblast view "
-                                  "visually on- or off-screen during "
-                                  "playblast")
-
+        self.high_quality.setText("Force Viewport 2.0 + AA")
         # endregion Checkboxes
 
-        self._layout.addLayout(viewport_output_layout)
+        self._layout.addWidget(self.override_viewport)
+        self._layout.addWidget(self.show_types_button)
         self._layout.addWidget(self.high_quality)
-        self._layout.addWidget(self.offscreen)
 
         # signals
-        self.use_isolate_view.stateChanged.connect(self.options_changed)
         self.high_quality.stateChanged.connect(self.options_changed)
         self.override_viewport.stateChanged.connect(self.options_changed)
         self.override_viewport.stateChanged.connect(self.on_toggle_override)
 
-    def show_menu(self):
-        """
-        Build the menu to select which items are shown in the capture
+    def _build_show_menu(self):
+        """Build the menu to select which items are shown in the capture
         :return: a QPushButton instance with a menu
         :rtype: QtGui.QPushButton
         """
 
-        # create the menu button
-        self.show_types_button = QtWidgets.QPushButton("Show")
-        self.show_types_menu = QtWidgets.QMenu(self)
-        self.show_types_menu.setWindowTitle("Show")
-        self.show_types_button.setFixedWidth(150)
-        self.show_types_menu.setFixedWidth(150)
-        self.show_types_menu.setTearOffEnabled(True)
+        menu = QtWidgets.QMenu(self)
+        menu.setWindowTitle("Show")
+        menu.setFixedWidth(150)
+        menu.setTearOffEnabled(True)
 
         # Show all check
-        self.toggle_all = QtWidgets.QAction(self.show_types_menu, text="All")
-        self.toggle_none = QtWidgets.QAction(self.show_types_menu, text="None")
-        self.show_types_menu.addAction(self.toggle_all)
-        self.show_types_menu.addAction(self.toggle_none)
-        self.show_types_menu.addSeparator()
+        toggle_all = QtWidgets.QAction(menu, text="All")
+        toggle_none = QtWidgets.QAction(menu, text="None")
+        menu.addAction(toggle_all)
+        menu.addAction(toggle_none)
+        menu.addSeparator()
 
-        # create checkbox for
         for obj_type in OBJECT_TYPES:
-            # create checkbox for object type
-            action = QtWidgets.QAction(self.show_types_menu, text=obj_type)
+            action = QtWidgets.QAction(menu, text=obj_type)
             action.setCheckable(True)
-            # add to menu and list of instances
+
+            # Add to menu and list of instances
+            menu.addAction(action)
             self.show_types_list.append(action)
-            self.show_types_menu.addAction(action)
 
-        self.show_types_button.setMenu(self.show_types_menu)
-        self.toggle_all.triggered.connect(self.toggle_all_visbile)
-        self.toggle_none.triggered.connect(self.toggle_all_hide)
+        # connect signals
+        toggle_all.triggered.connect(self.toggle_all_visbile)
+        toggle_none.triggered.connect(self.toggle_all_hide)
 
-        return self.show_types_button
+        return menu
 
     def on_toggle_override(self):
         """Enable or disable show menu when override is checked"""
@@ -160,9 +140,7 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
         :return: dictionary with all the settings of the widgets 
         """
         inputs = {"high_quality": self.high_quality.isChecked(),
-                  "override_viewport_options": self.override_viewport.isChecked(),
-                  "use_isolate_view": self.use_isolate_view.isChecked(),
-                  "offscreen": self.offscreen.isChecked()}
+                  "override_viewport_options": self.override_viewport.isChecked()}
 
         inputs.update(self.get_show_inputs())
 
@@ -179,14 +157,10 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
         # get input values directly from input given
         override_viewport = inputs.get("override_viewport_options", True)
         high_quality = inputs.get("high_quality", True)
-        use_isolate_view = inputs.get("use_isolate_view", False)
-        offscreen = inputs.get("offscreen", False)
 
         self.high_quality.setChecked(high_quality)
         self.override_viewport.setChecked(override_viewport)
         self.show_types_button.setEnabled(override_viewport)
-        self.use_isolate_view.setChecked(use_isolate_view)
-        self.offscreen.setChecked(offscreen)
 
         for action in self.show_types_list:
             action.setChecked(inputs.get(action.text(), True))
@@ -201,9 +175,9 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
 
         high_quality = self.high_quality.isChecked()
         override_viewport_options = self.override_viewport.isChecked()
-        offscreen = self.offscreen.isChecked()
 
-        outputs['off_screen'] = offscreen
+        outputs['viewport_options'] = dict()
+        outputs['viewport2_options'] = dict()
 
         if override_viewport_options and high_quality:
             # force viewport 2.0 and AA
@@ -214,7 +188,7 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
         # Viewport visibility settings
         if override_viewport_options:
             show_per_type = self.get_show_inputs()
-            outputs.update(show_per_type)
+            outputs['viewport_options'].update(show_per_type)
         else:
             for obj in self.show_types_list:
                 outputs['viewport_options'][obj.text()] = True
