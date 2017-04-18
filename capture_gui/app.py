@@ -252,15 +252,6 @@ class PresetWidget(QtWidgets.QWidget):
 
         return configurations
 
-    def get_preset(self, filename):
-
-        assert filename in self.get_presets()
-
-        # if filename not in self.get_presets():
-        #     self.preset_list.addItem(filename)
-        idx = self.presets.findText(filename)
-        self.presets.setCurrentIndex(idx)
-
     def apply_inputs(self, settings):
         """Apply saved settings of previous session
 
@@ -289,7 +280,6 @@ class App(QtWidgets.QWidget):
     viewer_start = QtCore.Signal(dict)
 
     # Attribues
-
     application_sections = ["config", "app"]
 
     def __init__(self, title, objectname, parent=None):
@@ -336,19 +326,12 @@ class App(QtWidgets.QWidget):
 
         # add standard buttons
         self.apply_button = QtWidgets.QPushButton("Capture")
-        self.close_apply_button = QtWidgets.QPushButton("Capture And Close")
-        self.default_buttons = QtWidgets.QHBoxLayout()
-        self.default_buttons.setContentsMargins(5, 5, 5, 5)
-        self.default_buttons.addWidget(self.apply_button)
-        self.default_buttons.addWidget(self.close_apply_button)
-
-        self.layout.addLayout(self.default_buttons)
+        self.layout.addWidget(self.apply_button)
 
         self.apply_inputs(self._read_widget_inputs())
 
         # default actions
         self.apply_button.clicked.connect(self.capture)
-        self.close_apply_button.clicked.connect(self.capture_close)
 
         # signals and slots
         self.presetwidget.config_opened.connect(self.advanced_configuration)
@@ -358,10 +341,6 @@ class App(QtWidgets.QWidget):
     def capture(self):
         options = self.get_outputs()
         capture.capture(options)
-
-    def capture_close(self):
-        self.capture()
-        self.close()
 
     def advanced_configuration(self):
         """Show the advanced configuration"""
@@ -518,8 +497,7 @@ class App(QtWidgets.QWidget):
 
         inputs = self.get_outputs()
         filename = self.presetwidget.save_preset(inputs)
-
-        self.presetwidget.get_preset(filename)
+        self.presetwidget.add_preset(filename)
 
     # override close event to ensure the input are stored
 
