@@ -1,14 +1,14 @@
 from .vendor.Qt import QtCore, QtWidgets, QtGui
 
 
-class AccordionItem(QtGui.QGroupBox):
+class AccordionItem(QtWidgets.QGroupBox):
     trigger = QtCore.Signal(bool)
 
     def __init__(self, accordion, title, widget):
-        QtGui.QGroupBox.__init__(self, accordion)
+        QtWidgets.QGroupBox.__init__(self, accordion)
 
         # create the layout
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(6, 12, 6, 6)
         layout.setSpacing(0)
         layout.addWidget(widget)
@@ -371,7 +371,7 @@ class AccordionItem(QtGui.QGroupBox):
         return self._widget
 
 
-class AccordionWidget(QtGui.QScrollArea):
+class AccordionWidget(QtWidgets.QScrollArea):
     """Accordion style widget.
     
     A collapsible accordion widget like Maya's attribute editor.
@@ -395,15 +395,15 @@ class AccordionWidget(QtGui.QScrollArea):
 
     def __init__(self, parent):
 
-        QtGui.QScrollArea.__init__(self, parent)
+        QtWidgets.QScrollArea.__init__(self, parent)
 
-        self.setFrameShape(QtGui.QScrollArea.NoFrame)
+        self.setFrameShape(QtWidgets.QScrollArea.NoFrame)
         self.setAutoFillBackground(False)
         self.setWidgetResizable(True)
         self.setMouseTracking(True)
         # self.verticalScrollBar().setMaximumWidth(10)
 
-        widget = QtGui.QWidget(self)
+        widget = QtWidgets.QWidget(self)
 
         # define custom properties
         self._rolloutStyle = AccordionWidget.Rounded
@@ -413,7 +413,7 @@ class AccordionWidget(QtGui.QScrollArea):
         self._scrollInitVal = 0
         self._itemClass = AccordionItem
 
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(2, 2, 2, 6)
         layout.setSpacing(2)
         layout.addStretch(1)
@@ -522,11 +522,11 @@ class AccordionWidget(QtGui.QScrollArea):
 
     def enterEvent(self, event):
         if self.canScroll():
-            QtGui.QApplication.setOverrideCursor(QtCore.Qt.OpenHandCursor)
+            QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.OpenHandCursor)
 
     def leaveEvent(self, event):
         if self.canScroll():
-            QtGui.QApplication.restoreOverrideCursor()
+            QtWidgets.QApplication.restoreOverrideCursor()
 
     def mouseMoveEvent(self, event):
         if self._scrolling:
@@ -551,13 +551,13 @@ class AccordionWidget(QtGui.QScrollArea):
             self._scrollInitY = event.globalY()
             self._scrollInitVal = self.verticalScrollBar().value()
 
-            QtGui.QApplication.setOverrideCursor(QtCore.Qt.ClosedHandCursor)
+            QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.ClosedHandCursor)
 
         event.accept()
 
     def mouseReleaseEvent(self, event):
         if self._scrolling:
-            QtGui.QApplication.restoreOverrideCursor()
+            QtWidgets.QApplication.restoreOverrideCursor()
 
         self._scrolling = False
         self._scrollInitY = 0
