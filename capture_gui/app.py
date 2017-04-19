@@ -9,6 +9,7 @@ import maya.cmds as cmds
 from .vendor.Qt import QtCore, QtWidgets, QtGui
 from . import lib
 from . import plugin
+from . import presets
 from .accordion import AccordionWidget
 
 log = logging.getLogger("Capture Gui")
@@ -169,6 +170,16 @@ class PresetWidget(QtWidgets.QWidget):
         config.clicked.connect(self.config_opened)
         presets.currentIndexChanged.connect(self.load_active_preset)
 
+        self._process_presets()
+
+    def _process_presets(self):
+        """
+        Make sure all registered presets are visible in the plugin
+        :return: None
+        """
+        for presetfile in presets.discover():
+            self.add_preset(presetfile)
+
     def import_preset(self):
         """Load preset files to override output values"""
 
@@ -207,6 +218,7 @@ class PresetWidget(QtWidgets.QWidget):
     def add_preset(self, filename):
         """
         Add the filename to the preset list and set the index to the filename
+        
         :param filename: the filename of the preset loaded
         :type filename: str
         
@@ -418,7 +430,7 @@ class App(QtWidgets.QWidget):
         """
 
         userdir = os.path.expanduser("~")
-        capturegui_dir = os.path.join(userdir, "CaptureGUI")
+        capturegui_dir = os.path.join(userdir, "CaptureGUI", "presets")
         capturegui_inputs = os.path.join(capturegui_dir, "capturegui.json")
         if not os.path.exists(capturegui_dir):
             os.makedirs(capturegui_dir)
