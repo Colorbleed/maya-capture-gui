@@ -178,7 +178,6 @@ class PresetWidget(QtWidgets.QWidget):
         :return: None
         """
         for presetfile in presets.discover():
-            print(presetfile)
             self.add_preset(presetfile)
 
     def import_preset(self):

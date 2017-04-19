@@ -15,10 +15,10 @@ OBJECT_TYPES = ['cameras',
                 'nParticles',
                 'nRigids',
                 'nurbsCurves',
-                'nurbsSurfaces'
+                'nurbsSurfaces',
                 'pivots',
                 'planes',
-                'polyMeshes',
+                'polymeshes',
                 'headsUpDisplay',
                 'strokes',
                 'subdivSurfaces']
