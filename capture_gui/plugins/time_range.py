@@ -7,8 +7,6 @@ from capture_gui.vendor.Qt import QtCore, QtWidgets
 import capture_gui.lib
 import capture_gui.plugin
 
-print capture_gui.lib
-
 
 class TimeWidget(capture_gui.plugin.Plugin):
     """Widget for time based options"""
