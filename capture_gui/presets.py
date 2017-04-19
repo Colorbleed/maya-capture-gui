@@ -53,7 +53,7 @@ def check_file_size(filepath):
 def preset_paths():
 
     paths = list()
-    for path in _presets_path:
+    for path in _registered_paths:
         if path in paths:
             continue
         paths.append(path)
@@ -71,7 +71,8 @@ def register_preset_path(path):
 
 
 
-user_folder = os.path.expandvars("~")
+user_folder = os.path.expanduser("~")
 capture_gui_presets = os.path.join(user_folder, "CaptureGUI", "presets")
+print capture_gui_presets
 register_preset_path(capture_gui_presets)
 
