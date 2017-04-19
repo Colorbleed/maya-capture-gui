@@ -3,7 +3,7 @@ import sys
 import maya.OpenMaya as om
 from capture_gui.vendor.Qt import QtCore, QtWidgets
 
-from  capture_gui import lib
+import capture_gui.lib
 import capture_gui.plugin
 
 
@@ -80,7 +80,7 @@ class TimePlugin(capture_gui.plugin.Plugin):
 
         mode = self.mode.currentText()
         if mode == self.RangeTimeSlider:
-            start, end = lib.get_time_slider_range()
+            start, end = capture_gui.lib.get_time_slider_range()
             self.start.setEnabled(False)
             self.end.setEnabled(False)
             mode_values = int(start), int(end)
@@ -92,7 +92,7 @@ class TimePlugin(capture_gui.plugin.Plugin):
         else:
             self.start.setEnabled(False)
             self.end.setEnabled(False)
-            mode_values = "({})".format(int(lib.get_current_frame()))
+            mode_values = "({})".format(int(capture_gui.lib.get_current_frame()))
 
         # Update label
         self.label = "Time Range {}".format(mode_values)
@@ -112,14 +112,14 @@ class TimePlugin(capture_gui.plugin.Plugin):
         mode = self.mode.currentText()
 
         if mode == self.RangeTimeSlider:
-            start, end = lib.get_time_slider_range()
+            start, end = capture_gui.lib.get_time_slider_range()
 
         elif mode == self.RangeStartEnd:
             start = self.start.value()
             end = self.end.value()
 
         elif mode == self.CurrentFrame:
-            frame = lib.get_current_frame()
+            frame = capture_gui.lib.get_current_frame()
             start = frame
             end = frame
 

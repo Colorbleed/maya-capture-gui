@@ -60,8 +60,6 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         self.show_types_button = QtWidgets.QPushButton("Show")
         self.show_types_button.setFixedWidth(150)
         self.show_types_menu = self._build_show_menu()
-        # override tear off menu to make sure the entire menu is visible
-        self.show_types_menu.stackUnder(self.show_types_button)
         self.show_types_button.setMenu(self.show_types_menu)
         # endregion Show
 

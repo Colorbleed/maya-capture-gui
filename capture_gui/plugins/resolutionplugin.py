@@ -66,7 +66,6 @@ class ResolutionPlugin(capture_gui.plugin.Plugin):
 
         self.scale_result = QtWidgets.QLineEdit()
         self.scale_result.setReadOnly(True)
-        self.scale_result.hide()
 
         # Percentage
         self.percent_label = QtWidgets.QLabel("Scale")

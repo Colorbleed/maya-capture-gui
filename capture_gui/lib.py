@@ -283,3 +283,10 @@ def get_maya_main_window():
     for obj in QtWidgets.QApplication.topLevelWidgets():
         if obj.objectName() == 'MayaWindow':
             return obj
+
+
+def ensure_single_instance(instance):
+    """Check if isntance is live, destroy when this is true"""
+    for obj in QtWidgets.QApplication.topLevelWidgets():
+        if isinstance(obj, instance):
+            obj.close()
