@@ -529,4 +529,6 @@ class App(QtWidgets.QWidget):
         """Store current configuration upon closing the application."""
 
         self._store_widget_configuration()
+        # check if show menu still lives
+
         event.accept()

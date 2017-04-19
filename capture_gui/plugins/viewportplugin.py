@@ -1,15 +1,25 @@
 from capture_gui.vendor.Qt import QtCore, QtWidgets
 
 import capture_gui.plugin
+import capture_gui.lib as lib
 
 OBJECT_TYPES = ['cameras',
+                'controlVertices',
+                'deformers',
                 'dimensions',
-                'grid',
+                'dynamicConstraints',
+                'dynamics',
+                'fluids',
                 'follicles',
+                'grid',
+                'hairSystems',
+                'handles',
+                'hulls',
                 'ikHandles',
+                'imagePlane',
                 'joints',
-                'locators',
                 'lights',
+                'locators',
                 'manipulators',
                 'nCloths',
                 'nParticles',
@@ -19,9 +29,9 @@ OBJECT_TYPES = ['cameras',
                 'pivots',
                 'planes',
                 'polymeshes',
-                'headsUpDisplay',
                 'strokes',
-                'subdivSurfaces']
+                'subdivSurfaces',
+                'textures']
 
 
 class ViewportPlugin(capture_gui.plugin.Plugin):
@@ -35,6 +45,7 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         super(ViewportPlugin, self).__init__(parent=parent)
 
         self.show_types_list = list()
+        self.plugin_shapes = lib.get_plugin_shapes()
 
         self.setObjectName(self.label)
 
@@ -49,8 +60,9 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         self.show_types_button = QtWidgets.QPushButton("Show")
         self.show_types_button.setFixedWidth(150)
         self.show_types_menu = self._build_show_menu()
+        # override tear off menu to make sure the entire menu is visible
+        self.show_types_menu.stackUnder(self.show_types_button)
         self.show_types_button.setMenu(self.show_types_menu)
-
         # endregion Show
 
         # region Checkboxes
@@ -76,6 +88,7 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         """
 
         menu = QtWidgets.QMenu(self)
+        menu.setObjectName("ShowShapesMenu")
         menu.setWindowTitle("Show")
         menu.setFixedWidth(150)
         menu.setTearOffEnabled(True)
@@ -87,6 +100,7 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         menu.addAction(toggle_none)
         menu.addSeparator()
 
+        # add standard object shapes
         for obj_type in OBJECT_TYPES:
             action = QtWidgets.QAction(menu, text=obj_type)
             action.setCheckable(True)
@@ -94,6 +108,17 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
             # Add to menu and list of instances
             menu.addAction(action)
             self.show_types_list.append(action)
+
+        # add plugin shapes if any
+        menu.addSeparator()
+        plugin_shapes = self.plugin_shapes.keys()
+        if plugin_shapes:
+            for plugin_shape in plugin_shapes:
+                action = QtWidgets.QAction(menu, text=plugin_shape)
+                action.setCheckable(True)
+
+                menu.addAction(action)
+                self.show_types_list.append(action)
 
         # connect signals
         toggle_all.triggered.connect(self.toggle_all_visbile)

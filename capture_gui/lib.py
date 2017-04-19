@@ -104,6 +104,17 @@ def get_time_slider_range(highlighted=True,
                 cmds.playbackOptions(query=True, maxTime=True)]
 
 
+def get_plugin_shapes():
+    """
+    Get all currently available plugin shapes
+    :return: dictionary
+    """
+    filters = cmds.pluginDisplayFilter(query=True, listFilters=True)
+    labels = [cmds.pluginDisplayFilter(f, query=True, label=True) for f in
+              filters]
+    return dict(zip(filters, labels))
+
+
 def open_file(filepath):
     """Open file using OS default settings"""
     if sys.platform.startswith('darwin'):

@@ -51,7 +51,7 @@ class TimePlugin(capture_gui.plugin.Plugin):
         :return: None
         """
 
-        callback = lambda x: self.on_mode_changed()
+        callback = lambda x: self.on_mode_changed(emit=False)
 
         # this avoid overriding the ids on re-run
         currentframe = om.MEventMessage.addEventCallback("timeChanged", callback)
@@ -65,12 +65,15 @@ class TimePlugin(capture_gui.plugin.Plugin):
         for callback in self._event_callbacks:
             om.MEventMessage.removeCallback(callback)
 
-    def on_mode_changed(self):
+    def on_mode_changed(self, emit=True):
         """
         Update the GUI when the user updated the time range or settings
 
         :param currentframe: frame number when time has been changed
         :type currentframe: float
+        
+        :param emit: Whether to emit the options changed signal
+        :type emit: bool
 
         :return: None 
         """
@@ -95,7 +98,8 @@ class TimePlugin(capture_gui.plugin.Plugin):
         self.label = "Time Range {}".format(mode_values)
         self.label_changed.emit(self.label)
 
-        self.options_changed.emit()
+        if emit:
+            self.options_changed.emit()
 
     def get_outputs(self, panel=""):
         """
