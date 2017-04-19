@@ -1,5 +1,3 @@
-from . import app
-from . import lib
 
 
 def main(show=True):
@@ -14,6 +12,8 @@ def main(show=True):
         capture_gui.app.App: The pyblish gui application instance.
 
     """
+    from . import app
+    from . import lib
 
     parent = lib.get_maya_main_window()
     window = app.App(title="Capture GUI",
