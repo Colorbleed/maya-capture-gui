@@ -1,10 +1,14 @@
 import sys
+import logging
 
 import maya.OpenMaya as om
 from capture_gui.vendor.Qt import QtCore, QtWidgets
 
 import capture_gui.lib
 import capture_gui.plugin
+
+
+logger = logging.getLogger("Time Range")
 
 
 class TimePlugin(capture_gui.plugin.Plugin):
@@ -43,27 +47,6 @@ class TimePlugin(capture_gui.plugin.Plugin):
 
         self.on_mode_changed()  # force enabled state refresh
         self.mode.currentIndexChanged.connect(self.on_mode_changed)
-
-    def _register_callbacks(self):
-        """
-        Register callbacks to ensure Capture GUI reacts to changes in
-        the Maya GUI in regards to time slider and current frame
-        :return: None
-        """
-
-        callback = lambda x: self.on_mode_changed(emit=False)
-
-        # this avoid overriding the ids on re-run
-        currentframe = om.MEventMessage.addEventCallback("timeChanged", callback)
-        timerange = om.MEventMessage.addEventCallback("playbackRangeChanged", callback)
-
-        self._event_callbacks.append(currentframe)
-        self._event_callbacks.append(timerange)
-
-    def _remove_callbacks(self):
-        """Remove callbacks when closing widget"""
-        for callback in self._event_callbacks:
-            om.MEventMessage.removeCallback(callback)
 
     def on_mode_changed(self, emit=True):
         """
@@ -137,7 +120,7 @@ class TimePlugin(capture_gui.plugin.Plugin):
 
     def apply_inputs(self, settings):
         # get values
-        mode = self.mode.findText(settings.get("mode", self.RangeTimeSlider))
+        mode = self.mode.findText(settings.get("time", self.RangeTimeSlider))
         startframe = settings.get("start_frame", 1)
         endframe = settings.get("end_frame", 120)
 
@@ -153,3 +136,27 @@ class TimePlugin(capture_gui.plugin.Plugin):
     def hideEvent(self, event):
         self._remove_callbacks()
         event.accept()
+
+    def _register_callbacks(self):
+        """
+        Register callbacks to ensure Capture GUI reacts to changes in
+        the Maya GUI in regards to time slider and current frame
+        :return: None
+        """
+
+        callback = lambda x: self.on_mode_changed(emit=False)
+
+        # this avoid overriding the ids on re-run
+        currentframe = om.MEventMessage.addEventCallback("timeChanged", callback)
+        timerange = om.MEventMessage.addEventCallback("playbackRangeChanged", callback)
+
+        self._event_callbacks.append(currentframe)
+        self._event_callbacks.append(timerange)
+
+    def _remove_callbacks(self):
+        """Remove callbacks when closing widget"""
+        for callback in self._event_callbacks:
+            try:
+                om.MEventMessage.removeCallback(callback)
+            except RuntimeError, error:
+                logger.error("Encounter error : {}".format(error))

@@ -20,6 +20,7 @@ from .vendor.Qt import QtCore, QtWidgets
 
 log = logging.getLogger(__name__)
 
+_ignore_paths = list()
 _registered_paths = list()
 _registered_plugins = dict()
 
@@ -215,6 +216,37 @@ def plugin_paths():
     return paths
 
 
+def sort_environment_values(values, keyword):
+    sorted_paths = list()
+    paths = values.split(";")
+    for path in paths:
+        if not path:
+            continue
+        if keyword not in path:
+            continue
+        sorted_paths.append(path)
+
+    return sorted_paths
+
+
+def ignore_paths_with_keyword(keyword):
+    """
+    Get all paths which need to be ignore to counter 
+    :param keyword: a name of a plugin which needs to be ignored
+    :type keyword: str
+    
+    :return: list of all paths which have the keyword
+    :rtype: list
+    """
+    for key, values in os.environ.items():
+        if keyword not in values:
+            continue
+        keyword_paths = sort_environment_values(values, keyword)
+        _ignore_paths.extend(keyword_paths)
+
+    return _ignore_paths
+
+
 def discover(paths=None):
     """Find and return available plug-ins
 
@@ -232,6 +264,7 @@ def discover(paths=None):
     # Include plug-ins from registered paths
     for path in paths or plugin_paths():
         path = os.path.normpath(path)
+
         if not os.path.isdir(path):
             continue
 

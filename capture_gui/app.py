@@ -283,24 +283,28 @@ class App(QtWidgets.QWidget):
     """
 
     # Signals
+    object_name = "CaptureGUI"
     options_changed = QtCore.Signal(dict)
     viewer_start = QtCore.Signal(dict)
 
     # Attributes
     application_sections = ["config", "app"]
 
-    def __init__(self, title, objectname, parent=None):
+    def __init__(self, title, parent=None):
         QtWidgets.QWidget.__init__(self, parent=parent)
 
         # Settings
+        # Remove pointer for memory when closed
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.settingfile = self._ensure_config_exist()
-        self.plugins = {
-            "app": list(),
-            "config": list()
-        }
+        self.plugins = {"app": list(),
+                        "config": list()}
+
+        self._config_dialog = None
+        self._build_configuration_dialog()
 
         # region Set Attributes
-        self.setObjectName(objectname)
+        self.setObjectName(self.object_name)
         self.setWindowTitle(title)
         self.setMinimumWidth(400)
 
@@ -320,10 +324,12 @@ class App(QtWidgets.QWidget):
 
         # Add separate widgets
         self.widgetlibrary.addItem("Preview",
-                                   PreviewWidget(self.get_outputs),
+                                   PreviewWidget(self.get_outputs,
+                                                 parent=self),
                                    collapsed=True)
 
-        self.presetwidget = PresetWidget(inputs_getter=self.get_inputs)
+        self.presetwidget = PresetWidget(inputs_getter=self.get_inputs,
+                                         parent=self)
         self.widgetlibrary.addItem("Presets", self.presetwidget)
 
         # add plug-in widgets
@@ -342,30 +348,26 @@ class App(QtWidgets.QWidget):
         self.apply_button.clicked.connect(self.capture)
 
         # signals and slots
-        self.presetwidget.config_opened.connect(self.advanced_configuration)
+        self.presetwidget.config_opened.connect(self.show_config)
         self.presetwidget.preset_loaded.connect(self.apply_inputs)
 
     def capture(self):
         options = self.get_outputs()
         capture.capture(**options)
 
-    def advanced_configuration(self):
-        """Show the advanced configuration"""
-
+    def _build_configuration_dialog(self):
+        """Build a configuration to store configuration widgets in"""
         dialog = QtWidgets.QDialog(self)
         dialog.setModal(True)
         dialog.setWindowTitle("Capture - Preset Configuration")
 
-        config_layout = QtWidgets.QVBoxLayout()
-        for widget in self.plugins["config"]:
-            groupwidget = QtWidgets.QGroupBox(widget.label)
-            group_layout = QtWidgets.QVBoxLayout()
-            group_layout.addWidget(widget)
-            groupwidget.setLayout(group_layout)
-            config_layout.addWidget(groupwidget)
+        QtWidgets.QVBoxLayout(dialog)
 
-        dialog.setLayout(config_layout)
-        dialog.show()
+        self._config_dialog = dialog
+
+    def show_config(self):
+        """Show the advanced configuration"""
+        self._config_dialog.show()
 
     def add_plugin(self, plugin):
         """Add an options widget plug-in to the UI"""
@@ -375,7 +377,7 @@ class App(QtWidgets.QWidget):
                         "{}".format(plugin.label, plugin.section))
             return
 
-        widget = plugin()
+        widget = plugin(self)
         widget.options_changed.connect(self.on_widget_settings_changed)
 
         # Add to plug-ins in its section
@@ -383,12 +385,18 @@ class App(QtWidgets.QWidget):
 
         # Implement additional settings depending on section
         if widget.section == "app":
-
             if not widget.hidden:
                 item = self.widgetlibrary.addItem(widget.label, widget)
-
                 # connect label change behaviour
                 widget.label_changed.connect(item.setTitle)
+
+        # Add the plugin in a QGroupBox to the configuration dialog
+        if widget.section == "config":
+            layout = self._config_dialog.layout()
+            group_widget = QtWidgets.QGroupBox(widget.label)
+            group_layout = QtWidgets.QVBoxLayout(group_widget )
+            group_layout.addWidget(widget)
+            layout.addWidget(group_widget)
 
     def get_outputs(self):
         """Return the settings for a capture as currently set in the Application.
@@ -527,8 +535,5 @@ class App(QtWidgets.QWidget):
     # override close event to ensure the input are stored
     def closeEvent(self, event):
         """Store current configuration upon closing the application."""
-
         self._store_widget_configuration()
-        # check if show menu still lives
-
         event.accept()

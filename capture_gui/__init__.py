@@ -18,12 +18,8 @@ def main(show=True):
     # get main maya window to parent widget to
     parent = lib.get_maya_main_window()
 
-    # kill any running instance of the app to ensure callbacks are correct
-    lib.ensure_single_instance(app.App)
-
     # launch app
     window = app.App(title="Capture GUI",
-                     objectname="CaptureGui",
                      parent=parent)
 
     if show:

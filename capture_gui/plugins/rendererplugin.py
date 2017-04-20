@@ -1,12 +1,12 @@
 import maya.cmds as cmds
+
 from capture_gui.vendor.Qt import QtCore, QtWidgets
-
-
 import capture_gui.lib as lib
 import capture_gui.plugin
 
 
 class RendererPlugin(capture_gui.plugin.Plugin):
+
     id = "Renderer"
     label = "Renderer"
     section = "config"
@@ -17,7 +17,9 @@ class RendererPlugin(capture_gui.plugin.Plugin):
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
 
+        # Get active renderers for viewport
         self._renderers = self.get_renderers()
 
         # Create list of renderers
@@ -44,8 +46,12 @@ class RendererPlugin(capture_gui.plugin.Plugin):
 
     def get_renderers(self):
         active_editor = lib.get_active_editor()
-        renderers_ui = cmds.modelEditor(active_editor, query=True, rendererListUI=True)
-        renderers_id = cmds.modelEditor(active_editor, query=True, rendererList=True)
+        renderers_ui = cmds.modelEditor(active_editor,
+                                        query=True,
+                                        rendererListUI=True)
+        renderers_id = cmds.modelEditor(active_editor,
+                                        query=True,
+                                        rendererList=True)
 
         renderers = dict(zip(renderers_ui, renderers_id))
         renderers.pop("Stub Renderer")
@@ -53,14 +59,10 @@ class RendererPlugin(capture_gui.plugin.Plugin):
         return renderers
 
     def get_defaults(self):
-        return {
-            "rendererName": "vp2Renderer"
-        }
+        return {"rendererName": "vp2Renderer"}
 
     def get_inputs(self):
-        return {
-            "rendererName": self.get_current_renderer()
-        }
+        return {"rendererName": self.get_current_renderer()}
 
     def get_outputs(self):
         """Get the plugin outputs that matches `capture.capture` arguments

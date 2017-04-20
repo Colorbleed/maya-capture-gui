@@ -15,8 +15,9 @@ class GenericPlugin(capture_gui.plugin.Plugin):
     def __init__(self, parent=None):
         super(GenericPlugin, self).__init__(parent=parent)
 
-        layout  = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
 
         isolate_view = QtWidgets.QCheckBox("Use isolate view from active panel")
         off_screen = QtWidgets.QCheckBox("Render offscreen")
@@ -85,9 +86,7 @@ class GenericPlugin(capture_gui.plugin.Plugin):
         if inputs['isolate_view']:
             panel = capture_gui.lib.get_active_editor()
             filter_set = mc.modelEditor(panel, query=True, viewObjects=True)
-            isolate = mc.sets(filter_set, q=1) if filter_set else None
+            isolate = mc.sets(filter_set, query=True) if filter_set else None
             outputs['isolate'] = isolate
 
         return outputs
-
-
