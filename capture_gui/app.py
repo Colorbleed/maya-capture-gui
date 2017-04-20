@@ -205,7 +205,6 @@ class PresetWidget(QtWidgets.QWidget):
         """
         current_index = self.presets.currentIndex()
         filename = self.presets.itemData(current_index)
-        print filename
         if not filename:
             return {}
 
@@ -287,11 +286,13 @@ class App(QtWidgets.QWidget):
     """
 
     # Signals
-    object_name = "CaptureGUI"
     options_changed = QtCore.Signal(dict)
+    playblast_start = QtCore.Signal(dict)
+    playblast_finished = QtCore.Signal(dict)
     viewer_start = QtCore.Signal(dict)
 
     # Attributes
+    object_name = "CaptureGUI"
     application_sections = ["config", "app"]
 
     def __init__(self, title, parent=None):
