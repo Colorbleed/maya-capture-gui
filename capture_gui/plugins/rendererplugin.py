@@ -6,6 +6,7 @@ import capture_gui.plugin
 
 
 class RendererPlugin(capture_gui.plugin.Plugin):
+    """Renderer plugin to control the used playblast renderer for viewport"""
 
     id = "Renderer"
     label = "Renderer"
@@ -45,6 +46,7 @@ class RendererPlugin(capture_gui.plugin.Plugin):
         return renderer
 
     def get_renderers(self):
+        """Collect all available renderers for playblast"""
         active_editor = lib.get_active_editor()
         renderers_ui = cmds.modelEditor(active_editor,
                                         query=True,

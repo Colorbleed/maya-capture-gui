@@ -107,8 +107,9 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
             menu.addAction(action)
             self.show_types_list.append(action)
 
-        # add plugin shapes if any
         menu.addSeparator()
+
+        # add plugin shapes if any
         plugin_shapes = self.plugin_shapes.keys()
         if plugin_shapes:
             for plugin_shape in plugin_shapes:

@@ -97,9 +97,7 @@ def register_preset_path(path):
     return path
 
 
-
 user_folder = os.path.expanduser("~")
 capture_gui_presets = os.path.join(user_folder, "CaptureGUI", "presets")
-print capture_gui_presets
 register_preset_path(capture_gui_presets)
 
