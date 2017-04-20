@@ -1,4 +1,3 @@
-
 from capture_gui.vendor.Qt import QtCore, QtWidgets
 
 import capture_gui.lib as lib

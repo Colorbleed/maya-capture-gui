@@ -394,7 +394,7 @@ class App(QtWidgets.QWidget):
         if widget.section == "config":
             layout = self._config_dialog.layout()
             group_widget = QtWidgets.QGroupBox(widget.label)
-            group_layout = QtWidgets.QVBoxLayout(group_widget )
+            group_layout = QtWidgets.QVBoxLayout(group_widget)
             group_layout.addWidget(widget)
             layout.addWidget(group_widget)
 
@@ -464,7 +464,7 @@ class App(QtWidgets.QWidget):
         inputs = {}
 
         if not os.path.isfile(self.settingfile) or \
-           os.stat(self.settingfile).st_size == 0:
+                        os.stat(self.settingfile).st_size == 0:
             return inputs
 
         try:

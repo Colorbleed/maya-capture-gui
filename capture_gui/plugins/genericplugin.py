@@ -19,7 +19,8 @@ class GenericPlugin(capture_gui.plugin.Plugin):
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
-        isolate_view = QtWidgets.QCheckBox("Use isolate view from active panel")
+        isolate_view = QtWidgets.QCheckBox(
+            "Use isolate view from active panel")
         off_screen = QtWidgets.QCheckBox("Render offscreen")
 
         layout.addWidget(isolate_view)

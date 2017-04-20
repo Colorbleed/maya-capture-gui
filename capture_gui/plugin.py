@@ -20,7 +20,6 @@ from .vendor.Qt import QtCore, QtWidgets
 
 log = logging.getLogger(__name__)
 
-_ignore_paths = list()
 _registered_paths = list()
 _registered_plugins = dict()
 
@@ -50,7 +49,7 @@ class Plugin(QtWidgets.QWidget):
     """
 
     label = ""
-    section = "app"        # "config" or "app"
+    section = "app"  # "config" or "app"
     hidden = False
     options_changed = QtCore.Signal()
     label_changed = QtCore.Signal(str)
@@ -214,37 +213,6 @@ def plugin_paths():
         paths.append(path)
 
     return paths
-
-
-def sort_environment_values(values, keyword):
-    sorted_paths = list()
-    paths = values.split(";")
-    for path in paths:
-        if not path:
-            continue
-        if keyword not in path:
-            continue
-        sorted_paths.append(path)
-
-    return sorted_paths
-
-
-def ignore_paths_with_keyword(keyword):
-    """
-    Get all paths which need to be ignore to counter 
-    :param keyword: a name of a plugin which needs to be ignored
-    :type keyword: str
-    
-    :return: list of all paths which have the keyword
-    :rtype: list
-    """
-    for key, values in os.environ.items():
-        if keyword not in values:
-            continue
-        keyword_paths = sort_environment_values(values, keyword)
-        _ignore_paths.extend(keyword_paths)
-
-    return _ignore_paths
 
 
 def discover(paths=None):

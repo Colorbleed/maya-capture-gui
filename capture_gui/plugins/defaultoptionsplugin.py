@@ -28,8 +28,8 @@ class DefaultOptionsPlugin(capture_gui.plugin.Plugin):
         outputs['sound'] = scene['sound']
 
         # override default settings
-        outputs['show_ornaments'] = False       # never show HUD or overlays
-        outputs['viewer'] = True                # always play video for now
+        outputs['show_ornaments'] = False  # never show HUD or overlays
+        outputs['viewer'] = True  # always play video for now
 
         # override camera options
         outputs['camera_options'] = dict()

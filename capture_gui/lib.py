@@ -63,7 +63,8 @@ def get_current_camera():
 
 def get_active_editor():
     """Return the active editor panel to playblast with"""
-    cmds.currentTime(cmds.currentTime(query=True))     # fixes `cmds.playblast` undo bug
+    cmds.currentTime(
+        cmds.currentTime(query=True))  # fixes `cmds.playblast` undo bug
     panel = cmds.playblast(activeEditor=True)
     return panel.split("|")[-1]
 
@@ -252,7 +253,6 @@ def _browse(path):
 
 
 def list_formats():
-
     # Workaround for Maya playblast bug where undo would
     # move the currentTime to frame one.
     cmds.currentTime(cmds.currentTime(query=True))

@@ -7,7 +7,6 @@ from capture_gui.vendor.Qt import QtCore, QtWidgets
 import capture_gui.lib
 import capture_gui.plugin
 
-
 logger = logging.getLogger("Time Range")
 
 
@@ -75,7 +74,8 @@ class TimePlugin(capture_gui.plugin.Plugin):
         else:
             self.start.setEnabled(False)
             self.end.setEnabled(False)
-            mode_values = "({})".format(int(capture_gui.lib.get_current_frame()))
+            mode_values = "({})".format(
+                int(capture_gui.lib.get_current_frame()))
 
         # Update label
         self.label = "Time Range {}".format(mode_values)
@@ -147,8 +147,10 @@ class TimePlugin(capture_gui.plugin.Plugin):
         callback = lambda x: self.on_mode_changed(emit=False)
 
         # this avoid overriding the ids on re-run
-        currentframe = om.MEventMessage.addEventCallback("timeChanged", callback)
-        timerange = om.MEventMessage.addEventCallback("playbackRangeChanged", callback)
+        currentframe = om.MEventMessage.addEventCallback("timeChanged",
+                                                         callback)
+        timerange = om.MEventMessage.addEventCallback("playbackRangeChanged",
+                                                      callback)
 
         self._event_callbacks.append(currentframe)
         self._event_callbacks.append(timerange)

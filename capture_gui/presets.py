@@ -1,15 +1,12 @@
 import glob
 import os
-import math
 import logging
 
-
 _registered_paths = []
-logger = logging.getLogger("Presets")
+log = logging.getLogger("Presets")
 
 
 def discover(paths=None):
-
     """
     Get the full list of files found in the registered folders
     
@@ -36,7 +33,7 @@ def discover(paths=None):
 
             # check for file size
             if not check_file_size(filename):
-                logger.warning("Filesize is smaller than 1 byte "
+                log.warning("Filesize is smaller than 1 byte "
                                "for file '{}'".format(filename))
                 continue
 
@@ -57,8 +54,7 @@ def check_file_size(filepath):
     """
 
     file_stats = os.stat(filepath)
-    filesize = math.floor(file_stats.st_size)
-    if filesize < 1.0:
+    if file_stats.st_size < 1:
         return False
     return True
 
@@ -90,7 +86,7 @@ def register_preset_path(path):
     :return: 
     """
     if path in _registered_paths:
-        return logger.warning("Path already registered: {}".format(path))
+        return log.warning("Path already registered: {}".format(path))
 
     _registered_paths.append(path)
 
@@ -100,4 +96,3 @@ def register_preset_path(path):
 user_folder = os.path.expanduser("~")
 capture_gui_presets = os.path.join(user_folder, "CaptureGUI", "presets")
 register_preset_path(capture_gui_presets)
-
