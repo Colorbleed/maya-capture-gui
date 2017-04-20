@@ -113,7 +113,7 @@ def get_plugin_shapes():
     filters = cmds.pluginDisplayFilter(query=True, listFilters=True)
     labels = [cmds.pluginDisplayFilter(f, query=True, label=True) for f in
               filters]
-    return dict(zip(filters, labels))
+    return dict(zip(labels, filters))
 
 
 def open_file(filepath):

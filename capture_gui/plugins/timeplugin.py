@@ -66,7 +66,6 @@ class TimePlugin(capture_gui.plugin.Plugin):
             self.start.setEnabled(False)
             self.end.setEnabled(False)
             mode_values = int(start), int(end)
-
         elif mode == self.RangeStartEnd:
             self.start.setEnabled(True)
             self.end.setEnabled(True)
@@ -129,13 +128,11 @@ class TimePlugin(capture_gui.plugin.Plugin):
         self.start.setValue(int(startframe))
         self.end.setValue(int(endframe))
 
-    def showEvent(self, event):
+    def initialize(self):
         self._register_callbacks()
-        event.accept()
 
-    def hideEvent(self, event):
+    def uninitialize(self):
         self._remove_callbacks()
-        event.accept()
 
     def _register_callbacks(self):
         """

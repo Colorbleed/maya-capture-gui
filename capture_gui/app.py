@@ -203,8 +203,10 @@ class PresetWidget(QtWidgets.QWidget):
         :return: collection of preset inputs
         :rtype: dict
         """
-        filename = self.presets.currentText()
-        if filename == "*":
+        current_index = self.presets.currentIndex()
+        filename = self.presets.itemData(current_index)
+        print filename
+        if not filename:
             return {}
 
         preset = lib.load_json(filename)
@@ -227,17 +229,19 @@ class PresetWidget(QtWidgets.QWidget):
         self.presets.blockSignals(True)
         item_index = 0
         item_count = self.presets.count()
+        nice_name = os.path.basename(filename)
         if item_count > 1:
             current_items = [self.presets.itemText(i)
                              for i in range(item_count)]
 
             # get index of the item from the combobox
             if filename not in current_items:
-                self.presets.addItem(filename)
 
-            item_index = self.presets.findText(filename)
+                self.presets.addItem(nice_name, userData=filename)
+
+            item_index = self.presets.findText(nice_name)
         else:
-            self.presets.addItem(filename)
+            self.presets.addItem(nice_name, userData=filename)
             item_index += 1
 
         # select item
@@ -345,15 +349,42 @@ class App(QtWidgets.QWidget):
         self.apply_inputs(self._read_widget_configuration())
 
         # default actions
-        self.apply_button.clicked.connect(self.capture)
+        self.apply_button.clicked.connect(self.apply)
 
         # signals and slots
         self.presetwidget.config_opened.connect(self.show_config)
         self.presetwidget.preset_loaded.connect(self.apply_inputs)
 
-    def capture(self):
+    def apply(self):
+        """Run capture action with current settings"""
+
+        filename = lib._browse(None)
+
+        # Return if playblast was cancelled
+        if filename is None:
+            return
+
         options = self.get_outputs()
-        capture.capture(**options)
+
+        self.playblast_start.emit(options)
+
+        # Perform capture
+        options['filename'] = filename
+        options['filename'] = lib._capture(options)
+
+        self.playblast_finished.emit(options)
+        filename = options['filename']  # get filename after callbacks
+
+        # Show viewer
+        if options['viewer']:
+            if filename and os.path.exists(filename):
+                self.viewer_start.emit(options)
+                lib.open_file(filename)
+            else:
+                raise RuntimeError("Can't open playblast because file "
+                                   "doesn't exist: {0}".format(filename))
+
+        return filename
 
     def _build_configuration_dialog(self):
         """Build a configuration to store configuration widgets in"""
@@ -367,6 +398,10 @@ class App(QtWidgets.QWidget):
 
     def show_config(self):
         """Show the advanced configuration"""
+        # calculate center of main widget
+        geometry = self.geometry()
+        self._config_dialog.move(QtCore.QPoint(geometry.x()+30,
+                                               geometry.y()))
         self._config_dialog.show()
 
     def add_plugin(self, plugin):
@@ -377,7 +412,7 @@ class App(QtWidgets.QWidget):
                         "{}".format(plugin.label, plugin.section))
             return
 
-        widget = plugin(self)
+        widget = plugin(parent=self)
         widget.options_changed.connect(self.on_widget_settings_changed)
 
         # Add to plug-ins in its section
@@ -399,7 +434,8 @@ class App(QtWidgets.QWidget):
             layout.addWidget(group_widget)
 
     def get_outputs(self):
-        """Return the settings for a capture as currently set in the Application.
+        """Return the settings for a capture as currently set in the 
+        Application.
 
         :return: a collection of settings
         :rtype: dict
@@ -535,5 +571,10 @@ class App(QtWidgets.QWidget):
     # override close event to ensure the input are stored
     def closeEvent(self, event):
         """Store current configuration upon closing the application."""
+
         self._store_widget_configuration()
+        for section_widgets in self.plugins.values():
+            for widget in section_widgets:
+                widget.uninitialize()
+
         event.accept()

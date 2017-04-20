@@ -3,35 +3,35 @@ from capture_gui.vendor.Qt import QtCore, QtWidgets
 import capture_gui.plugin
 import capture_gui.lib as lib
 
-OBJECT_TYPES = ['cameras',
-                'controlVertices',
-                'deformers',
-                'dimensions',
-                'dynamicConstraints',
-                'dynamics',
-                'fluids',
-                'follicles',
-                'grid',
-                'hairSystems',
-                'handles',
-                'hulls',
-                'ikHandles',
-                'imagePlane',
-                'joints',
-                'lights',
-                'locators',
-                'manipulators',
-                'nCloths',
-                'nParticles',
-                'nRigids',
-                'nurbsCurves',
-                'nurbsSurfaces',
-                'pivots',
-                'planes',
-                'polymeshes',
-                'strokes',
-                'subdivSurfaces',
-                'textures']
+OBJECT_TYPES = {'Cameras': 'cameras',
+                'Control Vertices': 'controlVertices',
+                'Deformers': 'deformers',
+                'Dimensions': 'dimensions',
+                'Dynamic Constraints': 'dynamicConstraints',
+                'Dynamics': 'dynamics',
+                'Fluids': 'fluids',
+                'Follicles': 'follicles',
+                'Grid': 'grid',
+                'Hair Systems': 'hairSystems',
+                'Handles': 'handles',
+                'Hulls': 'hulls',
+                'Ik Handles': 'ikHandles',
+                'ImagePlane': 'imagePlane',
+                'Joints': 'joints',
+                'Lights': 'lights',
+                'Locators': 'locators',
+                'Manipulators': 'manipulators',
+                'nCloths': 'nCloths',
+                'nParticles': 'nParticles',
+                'nRigids': 'nRigids',
+                'Nurbs Curves': 'nurbsCurves',
+                'Nurbs Surfaces': 'nurbsSurfaces',
+                'Pivots': 'pivots',
+                'Planes': 'planes',
+                'Polymeshes': 'polymeshes',
+                'Strokes': 'strokes',
+                'Subdiv Surfaces': 'subdivSurfaces',
+                'Textures': 'textures'}
 
 
 class ViewportPlugin(capture_gui.plugin.Plugin):
@@ -99,7 +99,7 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         menu.addSeparator()
 
         # add standard object shapes
-        for obj_type in OBJECT_TYPES:
+        for obj_type in OBJECT_TYPES.keys():
             action = QtWidgets.QAction(menu, text=obj_type)
             action.setCheckable(True)
 
@@ -156,7 +156,15 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         show_inputs = {}
         # get all checked objects
         for action in self.show_types_list:
-            show_inputs[action.text()] = action.isChecked()
+            action_text = action.text()
+            if action_text in OBJECT_TYPES:
+                name = OBJECT_TYPES[action_text]
+            elif action_text in self.plugin_shapes:
+                name = self.plugin_shapes[action_text]
+            else:
+                continue
+
+            show_inputs[name] = action.isChecked()
 
         return show_inputs
 

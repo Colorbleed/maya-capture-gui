@@ -97,6 +97,31 @@ class Plugin(QtWidgets.QWidget):
         """
         pass
 
+    def initialize(self):
+        """
+        This method is used to register any callbacks
+        :return: 
+        """
+        pass
+
+    def uninitialize(self):
+        """
+        Unregister any callback created when deleting the widget
+        
+        A general explation:
+
+        The deletion method is an attribute that lives inside the object to be
+        deleted, and that is the problem:
+        Destruction seems not to care about the order of destruction,
+        and the __dict__ that also holds the onDestroy bound method
+        gets destructed before it is called.
+        
+        Another solution is to use a weakref
+        
+        :return: None 
+        """
+        pass
+
     def __str__(self):
         return self.label or type(self).__name__
 
