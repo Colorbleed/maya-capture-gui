@@ -228,7 +228,7 @@ class PresetWidget(QtWidgets.QWidget):
         self.presets.blockSignals(True)
         item_index = 0
         item_count = self.presets.count()
-        nice_name = os.path.basename(filename)
+        nice_name = os.path.splitext(os.path.basename(filename))[0]
         if item_count > 1:
             current_items = [self.presets.itemText(i)
                              for i in range(item_count)]
