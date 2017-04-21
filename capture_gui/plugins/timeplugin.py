@@ -45,14 +45,14 @@ class TimePlugin(capture_gui.plugin.Plugin):
         self._layout.addWidget(self.end)
 
         self.on_mode_changed()  # force enabled state refresh
+
         self.mode.currentIndexChanged.connect(self.on_mode_changed)
+        self.start.valueChanged.connect(self.on_mode_changed)
+        self.end.valueChanged.connect(self.on_mode_changed)
 
     def on_mode_changed(self, emit=True):
         """
         Update the GUI when the user updated the time range or settings
-
-        :param currentframe: frame number when time has been changed
-        :type currentframe: float
         
         :param emit: Whether to emit the options changed signal
         :type emit: bool
