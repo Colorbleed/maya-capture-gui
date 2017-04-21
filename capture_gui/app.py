@@ -385,7 +385,6 @@ class App(QtWidgets.QWidget):
     def _build_configuration_dialog(self):
         """Build a configuration to store configuration widgets in"""
         dialog = QtWidgets.QDialog(self)
-        dialog.setModal(True)
         dialog.setWindowTitle("Capture - Preset Configuration")
 
         QtWidgets.QVBoxLayout(dialog)
