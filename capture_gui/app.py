@@ -225,25 +225,20 @@ class PresetWidget(QtWidgets.QWidget):
         
         :return: None 
         """
-        self.presets.blockSignals(True)
-        item_index = 0
+
+        filename = os.path.normpath(filename)
+        label = os.path.splitext(os.path.basename(filename))[0]
         item_count = self.presets.count()
-        nice_name = os.path.splitext(os.path.basename(filename))[0]
-        if item_count > 1:
-            current_items = [self.presets.itemText(i)
-                             for i in range(item_count)]
 
-            # get index of the item from the combobox
-            if filename not in current_items:
-
-                self.presets.addItem(nice_name, userData=filename)
-
-            item_index = self.presets.findText(nice_name)
+        paths = [self.presets.itemData(i) for i in range(item_count)]
+        if filename in paths:
+            log.info("Preset is already in the presets list: {0}".format(filename))
+            item_index = paths.index(filename)
         else:
-            self.presets.addItem(nice_name, userData=filename)
-            item_index += 1
+            self.presets.addItem(label, userData=filename)
+            item_index = item_count
 
-        # select item
+        self.presets.blockSignals(True)
         self.presets.setCurrentIndex(item_index)
         self.presets.blockSignals(False)
 
