@@ -15,9 +15,11 @@ def main(show=True):
     from . import app
     from . import lib
 
+    # get main maya window to parent widget to
     parent = lib.get_maya_main_window()
+
+    # launch app
     window = app.App(title="Capture GUI",
-                     objectname="CaptureGui",
                      parent=parent)
 
     if show:

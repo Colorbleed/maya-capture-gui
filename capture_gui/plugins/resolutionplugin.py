@@ -8,7 +8,7 @@ import capture_gui.lib as lib
 import capture_gui.plugin
 
 
-class ResolutionWidget(capture_gui.plugin.Plugin):
+class ResolutionPlugin(capture_gui.plugin.Plugin):
     """Resolution widget.
 
     Allows to set scale based on set of options.
@@ -25,7 +25,7 @@ class ResolutionWidget(capture_gui.plugin.Plugin):
     ScaleCustom = "Custom"
 
     def __init__(self, parent=None):
-        super(ResolutionWidget, self).__init__(parent=parent)
+        super(ResolutionPlugin, self).__init__(parent=parent)
 
         self._layout = QtWidgets.QVBoxLayout()
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -66,7 +66,6 @@ class ResolutionWidget(capture_gui.plugin.Plugin):
 
         self.scale_result = QtWidgets.QLineEdit()
         self.scale_result.setReadOnly(True)
-        self.scale_result.hide()
 
         # Percentage
         self.percent_label = QtWidgets.QLabel("Scale")

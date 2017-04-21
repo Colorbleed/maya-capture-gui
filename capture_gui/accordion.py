@@ -5,7 +5,7 @@ class AccordionItem(QtWidgets.QGroupBox):
     trigger = QtCore.Signal(bool)
 
     def __init__(self, accordion, title, widget):
-        QtWidgets.QGroupBox.__init__(self, accordion)
+        QtWidgets.QGroupBox.__init__(self, parent=accordion)
 
         # create the layout
         layout = QtWidgets.QVBoxLayout()
@@ -401,7 +401,7 @@ class AccordionWidget(QtWidgets.QScrollArea):
         self.setAutoFillBackground(False)
         self.setWidgetResizable(True)
         self.setMouseTracking(True)
-        # self.verticalScrollBar().setMaximumWidth(10)
+        self.verticalScrollBar().setMaximumWidth(10)
 
         widget = QtWidgets.QWidget(self)
 
@@ -420,6 +420,7 @@ class AccordionWidget(QtWidgets.QScrollArea):
 
         widget.setLayout(layout)
 
+        # setWidget parents widget under QScrollArea
         self.setWidget(widget)
 
     def setSpacing(self, spaceInt):
@@ -438,6 +439,7 @@ class AccordionWidget(QtWidgets.QScrollArea):
             item.setCollapsed(collapsed)
 
         self.setUpdatesEnabled(True)
+
         return item
 
     def clear(self):
@@ -551,7 +553,8 @@ class AccordionWidget(QtWidgets.QScrollArea):
             self._scrollInitY = event.globalY()
             self._scrollInitVal = self.verticalScrollBar().value()
 
-            QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.ClosedHandCursor)
+            QtWidgets.QApplication.setOverrideCursor(
+                QtCore.Qt.ClosedHandCursor)
 
         event.accept()
 

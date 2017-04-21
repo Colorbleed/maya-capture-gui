@@ -63,7 +63,8 @@ def get_current_camera():
 
 def get_active_editor():
     """Return the active editor panel to playblast with"""
-    cmds.currentTime(cmds.currentTime(query=True))     # fixes `cmds.playblast` undo bug
+    cmds.currentTime(
+        cmds.currentTime(query=True))  # fixes `cmds.playblast` undo bug
     panel = cmds.playblast(activeEditor=True)
     return panel.split("|")[-1]
 
@@ -102,6 +103,17 @@ def get_time_slider_range(highlighted=True,
     if not highlightedOnly:
         return [cmds.playbackOptions(query=True, minTime=True),
                 cmds.playbackOptions(query=True, maxTime=True)]
+
+
+def get_plugin_shapes():
+    """
+    Get all currently available plugin shapes
+    :return: dictionary
+    """
+    filters = cmds.pluginDisplayFilter(query=True, listFilters=True)
+    labels = [cmds.pluginDisplayFilter(f, query=True, label=True) for f in
+              filters]
+    return dict(zip(labels, filters))
 
 
 def open_file(filepath):
@@ -241,7 +253,6 @@ def _browse(path):
 
 
 def list_formats():
-
     # Workaround for Maya playblast bug where undo would
     # move the currentTime to frame one.
     cmds.currentTime(cmds.currentTime(query=True))

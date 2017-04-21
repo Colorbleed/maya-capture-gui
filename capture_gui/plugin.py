@@ -49,7 +49,7 @@ class Plugin(QtWidgets.QWidget):
     """
 
     label = ""
-    section = "app"        # "config" or "app"
+    section = "app"  # "config" or "app"
     hidden = False
     options_changed = QtCore.Signal()
     label_changed = QtCore.Signal(str)
@@ -94,6 +94,31 @@ class Plugin(QtWidgets.QWidget):
         Returns:
             None
         
+        """
+        pass
+
+    def initialize(self):
+        """
+        This method is used to register any callbacks
+        :return: 
+        """
+        pass
+
+    def uninitialize(self):
+        """
+        Unregister any callback created when deleting the widget
+        
+        A general explation:
+
+        The deletion method is an attribute that lives inside the object to be
+        deleted, and that is the problem:
+        Destruction seems not to care about the order of destruction,
+        and the __dict__ that also holds the onDestroy bound method
+        gets destructed before it is called.
+        
+        Another solution is to use a weakref
+        
+        :return: None 
         """
         pass
 
@@ -232,6 +257,7 @@ def discover(paths=None):
     # Include plug-ins from registered paths
     for path in paths or plugin_paths():
         path = os.path.normpath(path)
+
         if not os.path.isdir(path):
             continue
 

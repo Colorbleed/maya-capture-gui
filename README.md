@@ -70,3 +70,12 @@ app.viewer_start.connect(callback, QtCore.Qt.DirectConnection)
 # Show the app manually
 app.show()
 ```
+
+
+### Known issue s
+
+The Viewport Plugin has a menu which displays all the shapes who's visibility can
+be toggled in the viewport. Depending on the position of the menu, when creating a tear off version
+of the menu, it might be unable to close it because the title bar is not visible.
+Ensure the focus in on the menu and press Alt+F4 or use Alt+Space to show the window control menu
+through which you can close the window.

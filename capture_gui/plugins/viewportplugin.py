@@ -1,26 +1,40 @@
 from capture_gui.vendor.Qt import QtCore, QtWidgets
 
 import capture_gui.plugin
+import capture_gui.lib as lib
 
-OBJECT_TYPES = ['ikHandles',
-                'locators',
-                'lights',
-                'joints',
-                'manipulators',
-                'nCloths',
-                'follicles',
-                'dimensions',
-                'nurbsCurves',
-                'nParticles',
-                'nRigids',
-                'pivots',
-                'grid',
-                'headsUpDisplay',
-                'strokes',
-                'cameras']
+OBJECT_TYPES = {'Cameras': 'cameras',
+                'Control Vertices': 'controlVertices',
+                'Deformers': 'deformers',
+                'Dimensions': 'dimensions',
+                'Dynamic Constraints': 'dynamicConstraints',
+                'Dynamics': 'dynamics',
+                'Fluids': 'fluids',
+                'Follicles': 'follicles',
+                'Grid': 'grid',
+                'Hair Systems': 'hairSystems',
+                'Handles': 'handles',
+                'Hulls': 'hulls',
+                'Ik Handles': 'ikHandles',
+                'ImagePlane': 'imagePlane',
+                'Joints': 'joints',
+                'Lights': 'lights',
+                'Locators': 'locators',
+                'Manipulators': 'manipulators',
+                'nCloths': 'nCloths',
+                'nParticles': 'nParticles',
+                'nRigids': 'nRigids',
+                'Nurbs Curves': 'nurbsCurves',
+                'Nurbs Surfaces': 'nurbsSurfaces',
+                'Pivots': 'pivots',
+                'Planes': 'planes',
+                'Polymeshes': 'polymeshes',
+                'Strokes': 'strokes',
+                'Subdiv Surfaces': 'subdivSurfaces',
+                'Textures': 'textures'}
 
 
-class ViewportOptionWidget(capture_gui.plugin.Plugin):
+class ViewportPlugin(capture_gui.plugin.Plugin):
     """Plugin to apply viewport visibilities and settings"""
     id = "Viewport Options"
     label = "Viewport Options"
@@ -28,9 +42,10 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
     order = 70
 
     def __init__(self, parent=None):
-        super(ViewportOptionWidget, self).__init__(parent=parent)
+        super(ViewportPlugin, self).__init__(parent=parent)
 
         self.show_types_list = list()
+        self.plugin_shapes = lib.get_plugin_shapes()
 
         self.setObjectName(self.label)
 
@@ -46,7 +61,6 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
         self.show_types_button.setFixedWidth(150)
         self.show_types_menu = self._build_show_menu()
         self.show_types_button.setMenu(self.show_types_menu)
-
         # endregion Show
 
         # region Checkboxes
@@ -72,6 +86,7 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
         """
 
         menu = QtWidgets.QMenu(self)
+        menu.setObjectName("ShowShapesMenu")
         menu.setWindowTitle("Show")
         menu.setFixedWidth(150)
         menu.setTearOffEnabled(True)
@@ -83,13 +98,26 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
         menu.addAction(toggle_none)
         menu.addSeparator()
 
-        for obj_type in OBJECT_TYPES:
+        # add standard object shapes
+        for obj_type in OBJECT_TYPES.keys():
             action = QtWidgets.QAction(menu, text=obj_type)
             action.setCheckable(True)
 
             # Add to menu and list of instances
             menu.addAction(action)
             self.show_types_list.append(action)
+
+        menu.addSeparator()
+
+        # add plugin shapes if any
+        plugin_shapes = self.plugin_shapes.keys()
+        if plugin_shapes:
+            for plugin_shape in plugin_shapes:
+                action = QtWidgets.QAction(menu, text=plugin_shape)
+                action.setCheckable(True)
+
+                menu.addAction(action)
+                self.show_types_list.append(action)
 
         # connect signals
         toggle_all.triggered.connect(self.toggle_all_visbile)
@@ -128,7 +156,15 @@ class ViewportOptionWidget(capture_gui.plugin.Plugin):
         show_inputs = {}
         # get all checked objects
         for action in self.show_types_list:
-            show_inputs[action.text()] = action.isChecked()
+            action_text = action.text()
+            if action_text in OBJECT_TYPES:
+                name = OBJECT_TYPES[action_text]
+            elif action_text in self.plugin_shapes:
+                name = self.plugin_shapes[action_text]
+            else:
+                continue
+
+            show_inputs[name] = action.isChecked()
 
         return show_inputs
 

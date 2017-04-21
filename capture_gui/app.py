@@ -9,6 +9,7 @@ import maya.cmds as cmds
 from .vendor.Qt import QtCore, QtWidgets, QtGui
 from . import lib
 from . import plugin
+from . import presets
 from .accordion import AccordionWidget
 
 log = logging.getLogger("Capture Gui")
@@ -32,6 +33,9 @@ class PreviewWidget(QtWidgets.QWidget):
     frame (playblasted) snapshot. The result is displayed as image.
     """
 
+    preview_width = 320
+    preview_height = 180
+
     def __init__(self, options_getter, parent=None):
         QtWidgets.QWidget.__init__(self, parent=parent)
 
@@ -39,8 +43,8 @@ class PreviewWidget(QtWidgets.QWidget):
         self.initialized = False
         self.options_getter = options_getter
         self.preview = ClickLabel()
-        self.preview.setFixedWidth(1280 / 4)
-        self.preview.setFixedHeight(720 / 4)
+        self.preview.setFixedWidth(self.preview_width)
+        self.preview.setFixedHeight(self.preview_height)
 
         # region Build
         self.layout = QtWidgets.QVBoxLayout()
@@ -72,8 +76,8 @@ class PreviewWidget(QtWidgets.QWidget):
             # override settings that are constants for the preview
             options = options.copy()
             options['complete_filename'] = os.path.join(tempdir, "temp.jpg")
-            options['width'] = 1280 / 4
-            options['height'] = 720 / 4
+            options['width'] = self.preview_width
+            options['height'] = self.preview_height
             options['viewer'] = False
             options['frame'] = frame
             options['off_screen'] = True
@@ -166,6 +170,16 @@ class PresetWidget(QtWidgets.QWidget):
         config.clicked.connect(self.config_opened)
         presets.currentIndexChanged.connect(self.load_active_preset)
 
+        self._process_presets()
+
+    def _process_presets(self):
+        """
+        Make sure all registered presets are visible in the plugin
+        :return: None
+        """
+        for presetfile in presets.discover():
+            self.add_preset(presetfile)
+
     def import_preset(self):
         """Load preset files to override output values"""
 
@@ -189,8 +203,9 @@ class PresetWidget(QtWidgets.QWidget):
         :return: collection of preset inputs
         :rtype: dict
         """
-        filename = self.presets.currentText()
-        if filename == "*":
+        current_index = self.presets.currentIndex()
+        filename = self.presets.itemData(current_index)
+        if not filename:
             return {}
 
         preset = lib.load_json(filename)
@@ -204,6 +219,7 @@ class PresetWidget(QtWidgets.QWidget):
     def add_preset(self, filename):
         """
         Add the filename to the preset list and set the index to the filename
+        
         :param filename: the filename of the preset loaded
         :type filename: str
         
@@ -212,17 +228,19 @@ class PresetWidget(QtWidgets.QWidget):
         self.presets.blockSignals(True)
         item_index = 0
         item_count = self.presets.count()
+        nice_name = os.path.basename(filename)
         if item_count > 1:
             current_items = [self.presets.itemText(i)
                              for i in range(item_count)]
 
             # get index of the item from the combobox
             if filename not in current_items:
-                self.presets.addItem(filename)
 
-            item_index = self.presets.findText(filename)
+                self.presets.addItem(nice_name, userData=filename)
+
+            item_index = self.presets.findText(nice_name)
         else:
-            self.presets.addItem(filename)
+            self.presets.addItem(nice_name, userData=filename)
             item_index += 1
 
         # select item
@@ -269,24 +287,31 @@ class App(QtWidgets.QWidget):
 
     # Signals
     options_changed = QtCore.Signal(dict)
+    playblast_start = QtCore.Signal(dict)
+    playblast_finished = QtCore.Signal(dict)
     viewer_start = QtCore.Signal(dict)
 
-    # Attribues
+    # Attributes
+    object_name = "CaptureGUI"
     application_sections = ["config", "app"]
 
-    def __init__(self, title, objectname, parent=None):
+    def __init__(self, title, parent=None):
         QtWidgets.QWidget.__init__(self, parent=parent)
 
         # Settings
+        # Remove pointer for memory when closed
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.settingfile = self._ensure_config_exist()
-        self.plugins = {
-            "app": list(),
-            "config": list()
-        }
+        self.plugins = {"app": list(),
+                        "config": list()}
+
+        self._config_dialog = None
+        self._build_configuration_dialog()
 
         # region Set Attributes
-        self.setObjectName(objectname)
+        self.setObjectName(self.object_name)
         self.setWindowTitle(title)
+        self.setMinimumWidth(400)
 
         # Set dialog window flags so the widget can be correctly parented
         # to Maya main window
@@ -304,10 +329,12 @@ class App(QtWidgets.QWidget):
 
         # Add separate widgets
         self.widgetlibrary.addItem("Preview",
-                                   PreviewWidget(self.get_outputs),
+                                   PreviewWidget(self.get_outputs,
+                                                 parent=self),
                                    collapsed=True)
 
-        self.presetwidget = PresetWidget(inputs_getter=self.get_inputs)
+        self.presetwidget = PresetWidget(inputs_getter=self.get_inputs,
+                                         parent=self)
         self.widgetlibrary.addItem("Presets", self.presetwidget)
 
         # add plug-in widgets
@@ -323,33 +350,60 @@ class App(QtWidgets.QWidget):
         self.apply_inputs(self._read_widget_configuration())
 
         # default actions
-        self.apply_button.clicked.connect(self.capture)
+        self.apply_button.clicked.connect(self.apply)
 
         # signals and slots
-        self.presetwidget.config_opened.connect(self.advanced_configuration)
+        self.presetwidget.config_opened.connect(self.show_config)
         self.presetwidget.preset_loaded.connect(self.apply_inputs)
 
-    def capture(self):
+    def apply(self):
+        """Run capture action with current settings"""
+
+        filename = lib._browse(None)
+
+        # Return if playblast was cancelled
+        if filename is None:
+            return
+
         options = self.get_outputs()
-        capture.capture(**options)
 
-    def advanced_configuration(self):
-        """Show the advanced configuration"""
+        self.playblast_start.emit(options)
 
+        # Perform capture
+        options['filename'] = filename
+        options['filename'] = lib._capture(options)
+
+        self.playblast_finished.emit(options)
+        filename = options['filename']  # get filename after callbacks
+
+        # Show viewer
+        if options['viewer']:
+            if filename and os.path.exists(filename):
+                self.viewer_start.emit(options)
+                lib.open_file(filename)
+            else:
+                raise RuntimeError("Can't open playblast because file "
+                                   "doesn't exist: {0}".format(filename))
+
+        return filename
+
+    def _build_configuration_dialog(self):
+        """Build a configuration to store configuration widgets in"""
         dialog = QtWidgets.QDialog(self)
         dialog.setModal(True)
         dialog.setWindowTitle("Capture - Preset Configuration")
 
-        config_layout = QtWidgets.QVBoxLayout()
-        for widget in self.plugins["config"]:
-            groupwidget = QtWidgets.QGroupBox(widget.label)
-            group_layout = QtWidgets.QVBoxLayout()
-            group_layout.addWidget(widget)
-            groupwidget.setLayout(group_layout)
-            config_layout.addWidget(groupwidget)
+        QtWidgets.QVBoxLayout(dialog)
 
-        dialog.setLayout(config_layout)
-        dialog.show()
+        self._config_dialog = dialog
+
+    def show_config(self):
+        """Show the advanced configuration"""
+        # calculate center of main widget
+        geometry = self.geometry()
+        self._config_dialog.move(QtCore.QPoint(geometry.x()+30,
+                                               geometry.y()))
+        self._config_dialog.show()
 
     def add_plugin(self, plugin):
         """Add an options widget plug-in to the UI"""
@@ -359,7 +413,7 @@ class App(QtWidgets.QWidget):
                         "{}".format(plugin.label, plugin.section))
             return
 
-        widget = plugin()
+        widget = plugin(parent=self)
         widget.options_changed.connect(self.on_widget_settings_changed)
 
         # Add to plug-ins in its section
@@ -367,15 +421,22 @@ class App(QtWidgets.QWidget):
 
         # Implement additional settings depending on section
         if widget.section == "app":
-
             if not widget.hidden:
                 item = self.widgetlibrary.addItem(widget.label, widget)
-
                 # connect label change behaviour
                 widget.label_changed.connect(item.setTitle)
 
+        # Add the plugin in a QGroupBox to the configuration dialog
+        if widget.section == "config":
+            layout = self._config_dialog.layout()
+            group_widget = QtWidgets.QGroupBox(widget.label)
+            group_layout = QtWidgets.QVBoxLayout(group_widget)
+            group_layout.addWidget(widget)
+            layout.addWidget(group_widget)
+
     def get_outputs(self):
-        """Return the settings for a capture as currently set in the Application.
+        """Return the settings for a capture as currently set in the 
+        Application.
 
         :return: a collection of settings
         :rtype: dict
@@ -414,7 +475,7 @@ class App(QtWidgets.QWidget):
         """
 
         userdir = os.path.expanduser("~")
-        capturegui_dir = os.path.join(userdir, "CaptureGUI")
+        capturegui_dir = os.path.join(userdir, "CaptureGUI", "presets")
         capturegui_inputs = os.path.join(capturegui_dir, "capturegui.json")
         if not os.path.exists(capturegui_dir):
             os.makedirs(capturegui_dir)
@@ -440,7 +501,7 @@ class App(QtWidgets.QWidget):
         inputs = {}
 
         if not os.path.isfile(self.settingfile) or \
-           os.stat(self.settingfile).st_size == 0:
+                        os.stat(self.settingfile).st_size == 0:
             return inputs
 
         try:
@@ -513,4 +574,8 @@ class App(QtWidgets.QWidget):
         """Store current configuration upon closing the application."""
 
         self._store_widget_configuration()
+        for section_widgets in self.plugins.values():
+            for widget in section_widgets:
+                widget.uninitialize()
+
         event.accept()
