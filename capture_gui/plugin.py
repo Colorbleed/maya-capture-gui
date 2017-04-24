@@ -75,12 +75,16 @@ class Plugin(QtWidgets.QWidget):
         """
         return dict()
 
-    def get_inputs(self):
+    def get_inputs(self, as_preset):
         """Return widget's child settings.
         
         This should provide a dictionary of input settings of the plug-in
         that results in a dictionary that can be supplied to `apply_input()`
         This is used to save the settings of the preset to a widget.
+        
+        :param as_preset: 
+        :param as_presets: Toggle to mute certain input values of the widget
+        :type as_presets: bool
         
         Returns:
             dict: The currently set inputs of this widget.

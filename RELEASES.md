@@ -1,5 +1,9 @@
 # Maya Capture GUI RELEASES
 
+
+## 24 / 04 / 2017 - v1.0.2
+Fixed issue with storing presets and recent playblasts
+
 ## 24 / 04 / 2017 - v1.0.1
 
 Resolved issue #11

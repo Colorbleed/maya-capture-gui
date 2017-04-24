@@ -179,7 +179,7 @@ class ResolutionPlugin(capture_gui.plugin.Plugin):
 
         return {"width": scale[0], "height": scale[1]}
 
-    def get_inputs(self):
+    def get_inputs(self, as_preset):
         return {"mode": self.mode.currentText(),
                 "width": self.width.value(),
                 "height": self.height.value(),

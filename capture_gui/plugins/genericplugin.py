@@ -42,9 +42,10 @@ class GenericPlugin(capture_gui.plugin.Plugin):
             "isolate_view": False
         }
 
-    def get_inputs(self):
+    def get_inputs(self, as_preset):
         """
         Return the widget options
+        :param as_preset: 
         :return: dictionary with all the settings of the widgets 
         """
 

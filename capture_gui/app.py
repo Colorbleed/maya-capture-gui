@@ -271,7 +271,7 @@ class PresetWidget(QtWidgets.QWidget):
     def on_save_preset(self):
         """Save the inputs of all the plugins in a preset."""
 
-        inputs = self.inputs_getter()
+        inputs = self.inputs_getter(as_preset=True)
         self.save_preset(inputs)
 
 
@@ -481,7 +481,7 @@ class App(QtWidgets.QWidget):
     def _store_widget_configuration(self):
         """Store all used widget settings in the local json file"""
 
-        inputs = self.get_inputs()
+        inputs = self.get_inputs(as_preset=False)
 
         with open(self.settingfile, "w") as f:
             log.debug("Writing JSON file: {0}".format(f))
@@ -537,7 +537,7 @@ class App(QtWidgets.QWidget):
 
             widget.apply_inputs(widget_inputs)
 
-    def get_inputs(self):
+    def get_inputs(self, as_preset=False):
         """Return the inputs per plug-in widgets by `plugin.id`.
         
         Returns:
@@ -548,7 +548,7 @@ class App(QtWidgets.QWidget):
         inputs = dict()
         config_widgets = self._get_plugin_widgets()
         for widget in config_widgets:
-            widget_inputs = widget.get_inputs()
+            widget_inputs = widget.get_inputs(as_preset=as_preset)
             if not isinstance(widget_inputs, dict):
                 log.debug("Widget inputs are not a dictionary "
                           "'{}': {}".format(widget.id, widget_inputs))
@@ -562,6 +562,7 @@ class App(QtWidgets.QWidget):
         return inputs
 
     # override close event to ensure the input are stored
+
     def closeEvent(self, event):
         """Store current configuration upon closing the application."""
 

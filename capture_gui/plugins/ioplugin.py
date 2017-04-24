@@ -201,13 +201,18 @@ class IoPlugin(plugin.Plugin):
 
         return output
 
-    def get_inputs(self):
-        return {"directory": self.directory_path.text(),
-                "name": self.filename.text(),
-                "use_default": self.use_default.isChecked(),
-                "save_file": self.save_file.isChecked(),
-                "open_finished": self.open_finished.isChecked(),
-                "recent_playblasts": self.recent_playblasts}
+    def get_inputs(self, as_preset):
+        return_values = {"directory": self.directory_path.text(),
+                         "name": self.filename.text(),
+                         "use_default": self.use_default.isChecked(),
+                         "save_file": self.save_file.isChecked(),
+                         "open_finished": self.open_finished.isChecked(),
+                         "recent_playblasts": self.recent_playblasts}
+
+        if as_preset:
+            return_values["recent_playblasts"] = []
+
+        return return_values
 
     def apply_inputs(self, settings):
 

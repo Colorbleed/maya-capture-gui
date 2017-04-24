@@ -73,7 +73,7 @@ class CodecPlugin(capture_gui.plugin.Plugin):
                 "compression": self.compression.currentText(),
                 "quality": self.quality.value()}
 
-    def get_inputs(self):
+    def get_inputs(self, as_preset):
         # a bit redundant but it will work when iterating over widgets
         # so we don't have to write an exception
         return self.get_outputs()

@@ -63,7 +63,7 @@ class RendererPlugin(capture_gui.plugin.Plugin):
     def get_defaults(self):
         return {"rendererName": "vp2Renderer"}
 
-    def get_inputs(self):
+    def get_inputs(self, as_preset):
         return {"rendererName": self.get_current_renderer()}
 
     def get_outputs(self):

@@ -112,7 +112,7 @@ class TimePlugin(capture_gui.plugin.Plugin):
         return {"start_frame": start,
                 "end_frame": end}
 
-    def get_inputs(self):
+    def get_inputs(self, as_preset):
         return {"time": self.mode.currentText(),
                 "start_frame": self.start.value(),
                 "end_frame": self.end.value()}
