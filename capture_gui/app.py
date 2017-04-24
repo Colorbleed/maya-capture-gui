@@ -404,6 +404,7 @@ class App(QtWidgets.QWidget):
 
         widget = plugin(parent=self)
         widget.options_changed.connect(self.on_widget_settings_changed)
+        self.playblast_finished.connect(widget.on_playblast_finished)
 
         # Add to plug-ins in its section
         self.plugins[widget.section].append(widget)

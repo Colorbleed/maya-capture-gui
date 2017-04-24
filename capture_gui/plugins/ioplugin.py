@@ -1,7 +1,23 @@
 import os
+import logging
 
 from capture_gui.vendor.Qt import QtCore, QtWidgets
 from capture_gui import plugin, lib
+
+log = logging.getLogger("IO")
+
+
+class IoAction(QtWidgets.QAction):
+
+    def __init__(self, parent, text=None, userdata=None):
+        super(IoAction, self).__init__(parent)
+        if text:
+            self.setText(text)
+        if userdata:
+            self.setData(userdata)
+
+    def open_object_data(self):
+        lib.open_file(self.data())
 
 
 class IoPlugin(plugin.Plugin):
@@ -16,6 +32,8 @@ class IoPlugin(plugin.Plugin):
     order = 40
 
     previous_playblasts = list()
+
+    # Signals
 
     def __init__(self, parent=None):
         super(IoPlugin, self).__init__(parent=parent)
@@ -54,29 +72,20 @@ class IoPlugin(plugin.Plugin):
 
         # previous playblasts collection
         self.playblast_collection = QtWidgets.QPushButton("Play previous playblast")
-        self.playblast_collection.setMenu(self._build_collection_menu())
+        self.collection_menu = QtWidgets.QMenu()
+        self.playblast_collection.setMenu(self.collection_menu)
 
         self._layout.addLayout(checkbox_hlayout)
         self._layout.addLayout(filename_hlayout)
         self._layout.addLayout(dir_hlayout)
+        self._layout.addWidget(self.playblast_collection)
 
-        self.brows.clicked.connect(lib.browse)
+        self.brows.clicked.connect(self.get_save_directory)
         self.use_default.stateChanged.connect(self.toggle_use_default)
         self.save_file.stateChanged.connect(self.toggle_save)
 
         # set state of save widgets
         self.toggle_save()
-
-    def _build_collection_menu(self):
-
-        collection_menu = QtWidgets.QMenu()
-        for playblast in self.previous_playblasts:
-            name = os.path.basename(playblast)
-            menu_item = collection_menu.addAction(name, objectData=playblast)
-            if not os.path.exists(playblast):
-                menu_item.setEnabled(False)
-
-        return collection_menu
 
     def toggle_save(self):
         """Check to enable copy the playblast to a directory"""
@@ -104,6 +113,60 @@ class IoPlugin(plugin.Plugin):
         self.filename.setEnabled(state)
         self.directory_path.setEnabled(state)
         self.brows.setEnabled(state)
+
+    def get_save_directory(self):
+
+        # Maya's browser return Linux based file paths to ensure Windows is
+        # supported we use normpath
+        browsed_path = os.path.normpath(lib.browse())
+        filename = browsed_path.split(os.path.sep)[-1]
+        filepath = browsed_path.split(filename)[0]
+
+        self.directory_path.setText(filepath)
+        self.filename.setText(filename)
+
+    def create_call_playblast(self, filepath):
+
+        if not os.path.isfile(filepath):
+            raise RuntimeError("Given path '{}' "
+                               "is not a file".format(filepath))
+
+    def add_playblast(self, items):
+        """
+        Add an item to the previous playblast menu
+        
+        :param items: a collection of file paths of the playblast files
+        :type items: list
+        
+        :return: None 
+        """
+
+        for item in items:
+
+            if item in self.previous_playblasts:
+                log.info("Item already in list")
+                continue
+
+            if len(self.previous_playblasts) == 5:
+                self.previous_playblasts.pop(4)
+
+            self.previous_playblasts.insert(0, item)
+
+        self.collection_menu.clear()
+        for playblast in self.previous_playblasts:
+            action_label = os.path.basename(playblast)
+            action = IoAction(parent=self.collection_menu, text=action_label,
+                              userdata=playblast)
+            # check if file exists and disable when false
+            action.setEnabled(os.path.isfile(playblast))
+            action.triggered.connect(action.open_object_data)
+            self.collection_menu.addAction(action)
+
+    def on_playblast_finished(self, options):
+        playblast_file = options['filename']
+        if not playblast_file:
+            return
+        self.add_playblast([playblast_file])
 
     def get_outputs(self):
         """
@@ -141,7 +204,8 @@ class IoPlugin(plugin.Plugin):
         return {"directory": self.directory_path.text(),
                 "name": self.filename.text(),
                 "use_default": self.use_default.isChecked(),
-                "save_file": self.save_file.isChecked()}
+                "save_file": self.save_file.isChecked(),
+                "previous_playblasts": self.previous_playblasts}
 
     def apply_inputs(self, settings):
 
@@ -150,11 +214,15 @@ class IoPlugin(plugin.Plugin):
         use_default = settings.get("use_default", True)
         save_file = settings.get("save_file", True)
 
+        previous_playblasts = settings.get("previous_playblasts", [])
+
         self.filename.setText(filename)
         self.use_default.setChecked(use_default)
         self.save_file.setChecked(save_file)
         if not directory:
             self.directory_path.setPlaceholderText(self.template_text)
             return
+
+        self.add_playblast(previous_playblasts)
 
         self.directory_path.setText(directory)

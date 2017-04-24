@@ -55,6 +55,9 @@ class Plugin(QtWidgets.QWidget):
     label_changed = QtCore.Signal(str)
     order = 0
 
+    def on_playblast_finished(self, options):
+        pass
+
     def get_outputs(self):
         """Return the options as set in this plug-in widget.
 
