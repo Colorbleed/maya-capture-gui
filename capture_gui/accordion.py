@@ -420,7 +420,6 @@ class AccordionWidget(QtWidgets.QScrollArea):
 
         widget.setLayout(layout)
 
-        # setWidget parents widget under QScrollArea
         self.setWidget(widget)
 
     def setSpacing(self, spaceInt):
