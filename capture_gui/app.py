@@ -375,7 +375,6 @@ class App(QtWidgets.QWidget):
         filename = options["filename"]  # get filename after callbacks
 
         # Show viewer
-        # open_when_finished = inputs["IO"]["open_finished"]
         viewer = options.get("viewer", False)
         if viewer:
             if filename and os.path.exists(filename):
