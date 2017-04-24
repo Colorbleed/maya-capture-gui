@@ -56,10 +56,10 @@ class IoPlugin(plugin.Plugin):
         checkbox_hlayout.setContentsMargins(5, 0, 5, 0)
         self.save_file = QtWidgets.QCheckBox(text="Save")
         self.use_default = QtWidgets.QCheckBox(text="Use Default")
-        self.open_finished = QtWidgets.QCheckBox(text="View when finished")
+        self.open_viewer = QtWidgets.QCheckBox(text="View when finished")
         checkbox_hlayout.addWidget(self.save_file)
         checkbox_hlayout.addWidget(self.use_default)
-        checkbox_hlayout.addWidget(self.open_finished)
+        checkbox_hlayout.addWidget(self.open_viewer)
         checkbox_hlayout.addStretch(True)
         # endregion Checkboxes
 
@@ -198,6 +198,7 @@ class IoPlugin(plugin.Plugin):
             path = lib.default_output()
 
         output["filename"] = path
+        output["viewer"] = self.open_viewer.isChecked()
 
         return output
 
@@ -206,7 +207,7 @@ class IoPlugin(plugin.Plugin):
                          "name": self.filename.text(),
                          "use_default": self.use_default.isChecked(),
                          "save_file": self.save_file.isChecked(),
-                         "open_finished": self.open_finished.isChecked(),
+                         "open_finished": self.open_viewer.isChecked(),
                          "recent_playblasts": self.recent_playblasts}
 
         if as_preset:
@@ -227,7 +228,7 @@ class IoPlugin(plugin.Plugin):
         self.filename.setText(filename)
         self.use_default.setChecked(use_default)
         self.save_file.setChecked(save_file)
-        self.open_finished.setChecked(open_finished)
+        self.open_viewer.setChecked(open_finished)
 
         for playblast in reversed(previous_playblasts):
             self.add_playblast(playblast)

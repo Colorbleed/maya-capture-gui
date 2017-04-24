@@ -72,7 +72,7 @@ app.show()
 ```
 
 
-### Known issue s
+### Known issues
 
 The Viewport Plugin has a menu which displays all the shapes who's visibility can
 be toggled in the viewport. Depending on the position of the menu, when creating a tear off version

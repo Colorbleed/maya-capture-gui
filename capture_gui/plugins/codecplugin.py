@@ -49,7 +49,7 @@ class CodecPlugin(capture_gui.plugin.Plugin):
                 self.compression.setCurrentIndex(index)
 
     def refresh(self):
-        formats = lib.list_formats()
+        formats = sorted(lib.list_formats())
         self.format.clear()
         self.format.addItems(formats)
 

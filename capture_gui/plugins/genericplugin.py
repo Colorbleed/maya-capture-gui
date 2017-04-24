@@ -59,6 +59,7 @@ class GenericPlugin(capture_gui.plugin.Plugin):
     def apply_inputs(self, inputs):
         """
         Apply the settings which can be adjust by the user or presets
+
         :param inputs: a collection of settings
         :type inputs: dict
 
@@ -78,7 +79,7 @@ class GenericPlugin(capture_gui.plugin.Plugin):
         :return: 
         """
 
-        inputs = self.get_inputs()
+        inputs = self.get_inputs(as_preset=False)
         outputs = dict()
         outputs['off_screen'] = inputs['off_screen']
 

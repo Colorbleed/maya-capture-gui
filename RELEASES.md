@@ -3,6 +3,7 @@
 
 ## 24 / 04 / 2017 - v1.0.2
 Fixed issue with storing presets and recent playblasts
+Fixed issue with changing presets in selection box
 
 ## 24 / 04 / 2017 - v1.0.1
 

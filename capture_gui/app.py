@@ -10,6 +10,7 @@ from .vendor.Qt import QtCore, QtWidgets, QtGui
 from . import lib
 from . import plugin
 from . import presets
+from . import version
 from .accordion import AccordionWidget
 
 log = logging.getLogger("Capture Gui")
@@ -214,6 +215,12 @@ class PresetWidget(QtWidgets.QWidget):
         log.debug("Emitting preset_loaded: {0}".format(filename))
         self.preset_loaded.emit(preset)
 
+        # Ensure we preserve the index after loading the changes
+        # for all the plugin widgets
+        self.presets.blockSignals(True)
+        self.presets.setCurrentIndex(current_index)
+        self.presets.blockSignals(False)
+
         return preset
 
     def add_preset(self, filename):
@@ -304,8 +311,9 @@ class App(QtWidgets.QWidget):
         self._build_configuration_dialog()
 
         # region Set Attributes
+        title_version = "{} v{}".format(title, version.version)
         self.setObjectName(self.object_name)
-        self.setWindowTitle(title)
+        self.setWindowTitle(title_version)
         self.setMinimumWidth(400)
 
         # Set dialog window flags so the widget can be correctly parented
@@ -354,7 +362,6 @@ class App(QtWidgets.QWidget):
     def apply(self):
         """Run capture action with current settings"""
 
-        inputs = self.get_inputs()
         options = self.get_outputs()
         filename = options.get("filename", None)
 
@@ -368,8 +375,9 @@ class App(QtWidgets.QWidget):
         filename = options["filename"]  # get filename after callbacks
 
         # Show viewer
-        open_when_finished = inputs["IO"]["open_finished"]
-        if options["viewer"] and open_when_finished:
+        # open_when_finished = inputs["IO"]["open_finished"]
+        viewer = options.get("viewer", False)
+        if viewer:
             if filename and os.path.exists(filename):
                 self.viewer_start.emit(options)
                 lib.open_file(filename)
@@ -437,7 +445,6 @@ class App(QtWidgets.QWidget):
         # Get settings from widgets
         outputs = dict()
         for widget in self._get_plugin_widgets():
-
             widget_outputs = widget.get_outputs()
             if not widget_outputs:
                 continue
@@ -467,7 +474,7 @@ class App(QtWidgets.QWidget):
         """
 
         userdir = os.path.expanduser("~")
-        capturegui_dir = os.path.join(userdir, "CaptureGUI", "presets")
+        capturegui_dir = os.path.join(userdir, "CaptureGUI")
         capturegui_inputs = os.path.join(capturegui_dir, "capturegui.json")
         if not os.path.exists(capturegui_dir):
             os.makedirs(capturegui_dir)

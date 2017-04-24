@@ -211,8 +211,8 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         high_quality = self.high_quality.isChecked()
         override_viewport_options = self.override_viewport.isChecked()
 
-        outputs['viewport_options'] = dict()
         outputs['viewport2_options'] = dict()
+        outputs['viewport_options'] = dict()
 
         if override_viewport_options and high_quality:
             # force viewport 2.0 and AA
@@ -225,7 +225,9 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
             show_per_type = self.get_show_inputs()
             outputs['viewport_options'].update(show_per_type)
         else:
-            for obj in self.show_types_list:
-                outputs['viewport_options'][obj.text()] = True
+            # If not override force all to True
+            show_per_type = self.get_show_inputs()
+            show_per_type = {key: True for key in show_per_type}
+            outputs['viewport_options'].update(show_per_type)
 
         return outputs
