@@ -34,8 +34,6 @@ class CameraPlugin(capture_gui.plugin.Plugin):
         self._layout.addWidget(self.get_active)
         self._layout.addWidget(self.refresh)
 
-        self.set_active_cam()
-
         # Signals
         self.get_active.clicked.connect(self.set_active_cam)
         self.refresh.clicked.connect(self.on_refresh)
@@ -44,6 +42,7 @@ class CameraPlugin(capture_gui.plugin.Plugin):
         self.options_changed.connect(self.on_update_label)
 
         # Force update of the label
+        self.set_active_cam()
         self.on_update_label()
 
     def set_active_cam(self):

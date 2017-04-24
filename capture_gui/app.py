@@ -354,19 +354,14 @@ class App(QtWidgets.QWidget):
     def apply(self):
         """Run capture action with current settings"""
 
-        filename = lib._browse(None)
-
-        # Return if playblast was cancelled
-        if filename is None:
-            return
-
         options = self.get_outputs()
+        filename = options.get("filename", None)
 
         self.playblast_start.emit(options)
 
         # Perform capture
         options['filename'] = filename
-        options['filename'] = lib._capture(options)
+        options['filename'] = lib.capture_scene(options)
 
         self.playblast_finished.emit(options)
         filename = options['filename']  # get filename after callbacks

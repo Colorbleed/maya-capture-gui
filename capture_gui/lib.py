@@ -6,6 +6,7 @@ import glob
 import subprocess
 import contextlib
 
+import datetime
 import maya.cmds as cmds
 import maya.mel as mel
 import capture
@@ -163,7 +164,7 @@ def _fix_playblast_output_path(filepath):
     return filepath
 
 
-def _capture(options):
+def capture_scene(options):
     """Capture using scene settings.
 
     Uses the view settings from "panel".
@@ -199,7 +200,7 @@ def _capture(options):
     return path
 
 
-def _browse(path):
+def browse(path=None):
     """Open a pop-up browser for the user"""
 
     # Acquire path from user input if none defined
@@ -250,6 +251,22 @@ def _browse(path):
         path = path[:-len(extension)]
 
     return path
+
+
+def default_output():
+    """Generate outpath based on current scenename and set project"""
+
+    workspace = cmds.workspace(query=True, rootDirectory=True)
+    folder = cmds.workspace(fileRuleEntry="images")
+    scene_name = cmds.file(query=True, sceneName=True)
+    scene = os.path.splitext(os.path.basename(scene_name))[0] or "playblast"
+
+    # get current datetime
+    timestamp = datetime.datetime.today()
+    str_timestamp = timestamp.strftime("%Y-%m-%d_%H-%M-%S")
+    filename = "{}_{}".format(scene, str_timestamp)
+
+    return os.path.join(workspace, folder, filename)
 
 
 def list_formats():
