@@ -41,7 +41,6 @@ class IoPlugin(plugin.Plugin):
     label = "Save"
     section = "app"
     order = 40
-    # Signals
 
     def __init__(self, parent=None):
         super(IoPlugin, self).__init__(parent=parent)
@@ -52,42 +51,54 @@ class IoPlugin(plugin.Plugin):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
 
-        # checkbox
+        # region Checkboxes
         checkbox_hlayout = QtWidgets.QHBoxLayout()
         checkbox_hlayout.setContentsMargins(5, 0, 5, 0)
         self.save_file = QtWidgets.QCheckBox(text="Save")
         self.use_default = QtWidgets.QCheckBox(text="Use Default")
+        self.open_finished = QtWidgets.QCheckBox(text="View when finished")
         checkbox_hlayout.addWidget(self.save_file)
         checkbox_hlayout.addWidget(self.use_default)
+        checkbox_hlayout.addWidget(self.open_finished)
         checkbox_hlayout.addStretch(True)
+        # endregion Checkboxes
 
-        # directory
+        # region Directory
+        self.dir_widget = QtWidgets.QWidget()
         dir_hlayout = QtWidgets.QHBoxLayout()
         dir_hlayout.setContentsMargins(0, 0, 0, 0)
         dir_label = QtWidgets.QLabel("Directory :")
+        dir_label.setFixedWidth(60)
         self.browse = QtWidgets.QPushButton("Browse")
         self.directory_path = QtWidgets.QLineEdit()
         self.directory_path.setPlaceholderText("Select a directory")
         dir_hlayout.addWidget(dir_label)
         dir_hlayout.addWidget(self.directory_path)
         dir_hlayout.addWidget(self.browse)
+        self.dir_widget.setLayout(dir_hlayout)
+        # endregion Directory
 
-        # filename
+        # region Filename
+        self.filename_widget = QtWidgets.QWidget()
         filename_hlayout = QtWidgets.QHBoxLayout()
         filename_hlayout.setContentsMargins(0, 0, 0, 0)
         filename_label = QtWidgets.QLabel("File Name :")
+        filename_label.setFixedWidth(60)
         self.filename = QtWidgets.QLineEdit()
         filename_hlayout.addWidget(filename_label)
         filename_hlayout.addWidget(self.filename)
+        self.filename_widget.setLayout(filename_hlayout)
+        # endregion Filename
 
-        # previous playblasts collection
+        # region Recent Playblast
         self.play_recent = QtWidgets.QPushButton("Play recent playblast")
         self.recent_menu = QtWidgets.QMenu()
         self.play_recent.setMenu(self.recent_menu)
+        # endregion Recent Playblast
 
         self._layout.addLayout(checkbox_hlayout)
-        self._layout.addLayout(filename_hlayout)
-        self._layout.addLayout(dir_hlayout)
+        self._layout.addWidget(self.filename_widget)
+        self._layout.addWidget(self.dir_widget)
         self._layout.addWidget(self.play_recent)
 
         self.browse.clicked.connect(self.get_save_directory)
@@ -96,33 +107,20 @@ class IoPlugin(plugin.Plugin):
 
         # set state of save widgets
         self.toggle_save()
+        self.toggle_use_default()
 
     def toggle_save(self):
         """Check to enable copy the playblast to a directory"""
 
         state = self.save_file.isChecked()
         self.use_default.setEnabled(state)
-        self._set_enabled_save_widgets(state)
 
     def toggle_use_default(self):
         """Toggle if the file name and directory widgets are enabled"""
 
         state = self.use_default.isChecked()
-        self._set_enabled_save_widgets(not state)
-
-    def _set_enabled_save_widgets(self, state):
-        """
-        Set enable of the widgets which control the output
-        
-        :param state: the state of enable
-        :type state: bool
-        
-        :rtype: None
-        """
-
-        self.filename.setEnabled(state)
-        self.directory_path.setEnabled(state)
-        self.browse.setEnabled(state)
+        self.filename_widget.setVisible(not state)
+        self.dir_widget.setVisible(not state)
 
     def get_save_directory(self):
 
@@ -169,7 +167,7 @@ class IoPlugin(plugin.Plugin):
         playblast_file = options['filename']
         if not playblast_file:
             return
-        self.add_playblast([playblast_file])
+        self.add_playblast(playblast_file)
 
     def get_outputs(self):
         """
@@ -208,7 +206,8 @@ class IoPlugin(plugin.Plugin):
                 "name": self.filename.text(),
                 "use_default": self.use_default.isChecked(),
                 "save_file": self.save_file.isChecked(),
-                "previous_playblasts": self.recent_playblasts}
+                "open_finished": self.open_finished.isChecked(),
+                "recent_playblasts": self.recent_playblasts}
 
     def apply_inputs(self, settings):
 
@@ -216,12 +215,14 @@ class IoPlugin(plugin.Plugin):
         filename = settings.get("name", None)
         use_default = settings.get("use_default", True)
         save_file = settings.get("save_file", True)
+        open_finished = settings.get("open_finished", True)
 
-        previous_playblasts = settings.get("previous_playblasts", [])
+        previous_playblasts = settings.get("recent_playblasts", [])
 
         self.filename.setText(filename)
         self.use_default.setChecked(use_default)
         self.save_file.setChecked(save_file)
+        self.open_finished.setChecked(open_finished)
 
         for playblast in reversed(previous_playblasts):
             self.add_playblast(playblast)

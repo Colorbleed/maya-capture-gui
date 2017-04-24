@@ -1,9 +1,9 @@
 # Maya Capture GUI RELEASES
 
-
 ## 24 / 04 / 2017 - v1.0.1
 
 Resolved issue #11
+Resolved issue #09
 
 - Update Save options:
   + Choose to save to a location or keep it in the temp folder
@@ -11,6 +11,7 @@ Resolved issue #11
   + Use custom path: directory / file name
 
 - Added menu for previous playblasts
+- Added checkbox to control whether to open the playblast after capture
 
 ## 21 / 04 / 2017 - v1.0.0
 

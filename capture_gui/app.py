@@ -354,20 +354,22 @@ class App(QtWidgets.QWidget):
     def apply(self):
         """Run capture action with current settings"""
 
+        inputs = self.get_inputs()
         options = self.get_outputs()
         filename = options.get("filename", None)
 
         self.playblast_start.emit(options)
 
         # Perform capture
-        options['filename'] = filename
-        options['filename'] = lib.capture_scene(options)
+        options["filename"] = filename
+        options["filename"] = lib.capture_scene(options)
 
         self.playblast_finished.emit(options)
-        filename = options['filename']  # get filename after callbacks
+        filename = options["filename"]  # get filename after callbacks
 
         # Show viewer
-        if options['viewer']:
+        open_when_finished = inputs["IO"]["open_finished"]
+        if options["viewer"] and open_when_finished:
             if filename and os.path.exists(filename):
                 self.viewer_start.emit(options)
                 lib.open_file(filename)
