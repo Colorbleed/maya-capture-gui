@@ -9,12 +9,23 @@ log = logging.getLogger("IO")
 
 class IoAction(QtWidgets.QAction):
 
-    def __init__(self, parent, text=None, userdata=None):
+    def __init__(self, parent, filepath):
         super(IoAction, self).__init__(parent)
-        if text:
-            self.setText(text)
-        if userdata:
-            self.setData(userdata)
+
+        action_label = os.path.basename(filepath)
+
+        self.setText(action_label)
+        self.setData(filepath)
+
+        # check if file exists and disable when false
+        self.setEnabled(os.path.isfile(filepath))
+
+        # get icon from file
+        info = QtCore.QFileInfo(filepath)
+        icon_provider = QtWidgets.QFileIconProvider()
+        self.setIcon(icon_provider.icon(info))
+
+        self.triggered.connect(self.open_object_data)
 
     def open_object_data(self):
         lib.open_file(self.data())
@@ -30,13 +41,12 @@ class IoPlugin(plugin.Plugin):
     label = "Save"
     section = "app"
     order = 40
-
-    previous_playblasts = list()
-
     # Signals
 
     def __init__(self, parent=None):
         super(IoPlugin, self).__init__(parent=parent)
+
+        self.recent_playblasts = list()
 
         self._layout = QtWidgets.QVBoxLayout()
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -52,15 +62,15 @@ class IoPlugin(plugin.Plugin):
         checkbox_hlayout.addStretch(True)
 
         # directory
-        self.template_text = "Select a director"
         dir_hlayout = QtWidgets.QHBoxLayout()
         dir_hlayout.setContentsMargins(0, 0, 0, 0)
         dir_label = QtWidgets.QLabel("Directory :")
-        self.brows = QtWidgets.QPushButton("Brows")
+        self.browse = QtWidgets.QPushButton("Browse")
         self.directory_path = QtWidgets.QLineEdit()
+        self.directory_path.setPlaceholderText("Select a directory")
         dir_hlayout.addWidget(dir_label)
         dir_hlayout.addWidget(self.directory_path)
-        dir_hlayout.addWidget(self.brows)
+        dir_hlayout.addWidget(self.browse)
 
         # filename
         filename_hlayout = QtWidgets.QHBoxLayout()
@@ -71,16 +81,16 @@ class IoPlugin(plugin.Plugin):
         filename_hlayout.addWidget(self.filename)
 
         # previous playblasts collection
-        self.playblast_collection = QtWidgets.QPushButton("Play previous playblast")
-        self.collection_menu = QtWidgets.QMenu()
-        self.playblast_collection.setMenu(self.collection_menu)
+        self.play_recent = QtWidgets.QPushButton("Play recent playblast")
+        self.recent_menu = QtWidgets.QMenu()
+        self.play_recent.setMenu(self.recent_menu)
 
         self._layout.addLayout(checkbox_hlayout)
         self._layout.addLayout(filename_hlayout)
         self._layout.addLayout(dir_hlayout)
-        self._layout.addWidget(self.playblast_collection)
+        self._layout.addWidget(self.play_recent)
 
-        self.brows.clicked.connect(self.get_save_directory)
+        self.browse.clicked.connect(self.get_save_directory)
         self.use_default.stateChanged.connect(self.toggle_use_default)
         self.save_file.stateChanged.connect(self.toggle_save)
 
@@ -112,7 +122,7 @@ class IoPlugin(plugin.Plugin):
 
         self.filename.setEnabled(state)
         self.directory_path.setEnabled(state)
-        self.brows.setEnabled(state)
+        self.browse.setEnabled(state)
 
     def get_save_directory(self):
 
@@ -131,7 +141,7 @@ class IoPlugin(plugin.Plugin):
             raise RuntimeError("Given path '{}' "
                                "is not a file".format(filepath))
 
-    def add_playblast(self, items):
+    def add_playblast(self, item):
         """
         Add an item to the previous playblast menu
         
@@ -141,26 +151,19 @@ class IoPlugin(plugin.Plugin):
         :return: None 
         """
 
-        for item in items:
+        if item in self.recent_playblasts:
+            log.info("Item already in list")
+            return
 
-            if item in self.previous_playblasts:
-                log.info("Item already in list")
-                continue
+        if len(self.recent_playblasts) == 5:
+            self.recent_playblasts.pop(4)
 
-            if len(self.previous_playblasts) == 5:
-                self.previous_playblasts.pop(4)
+        self.recent_playblasts.insert(0, item)
 
-            self.previous_playblasts.insert(0, item)
-
-        self.collection_menu.clear()
-        for playblast in self.previous_playblasts:
-            action_label = os.path.basename(playblast)
-            action = IoAction(parent=self.collection_menu, text=action_label,
-                              userdata=playblast)
-            # check if file exists and disable when false
-            action.setEnabled(os.path.isfile(playblast))
-            action.triggered.connect(action.open_object_data)
-            self.collection_menu.addAction(action)
+        self.recent_menu.clear()
+        for playblast in self.recent_playblasts:
+            action = IoAction(parent=self, filepath=playblast)
+            self.recent_menu.addAction(action)
 
     def on_playblast_finished(self, options):
         playblast_file = options['filename']
@@ -205,7 +208,7 @@ class IoPlugin(plugin.Plugin):
                 "name": self.filename.text(),
                 "use_default": self.use_default.isChecked(),
                 "save_file": self.save_file.isChecked(),
-                "previous_playblasts": self.previous_playblasts}
+                "previous_playblasts": self.recent_playblasts}
 
     def apply_inputs(self, settings):
 
@@ -219,10 +222,8 @@ class IoPlugin(plugin.Plugin):
         self.filename.setText(filename)
         self.use_default.setChecked(use_default)
         self.save_file.setChecked(save_file)
-        if not directory:
-            self.directory_path.setPlaceholderText(self.template_text)
-            return
 
-        self.add_playblast(previous_playblasts)
+        for playblast in reversed(previous_playblasts):
+            self.add_playblast(playblast)
 
         self.directory_path.setText(directory)
