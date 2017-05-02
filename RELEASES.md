@@ -1,5 +1,8 @@
 # Maya Capture GUI RELEASES
 
+## 02 / 05 / 2017 - v1.1.0
+- Added plugin validation function
+- Added app validation function to validate listed plugins
 
 ## 24 / 04 / 2017 - v1.0.2
 Fixed issue with storing presets and recent playblasts

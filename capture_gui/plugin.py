@@ -58,6 +58,15 @@ class Plugin(QtWidgets.QWidget):
     def on_playblast_finished(self, options):
         pass
 
+    def validate_outputs(self):
+        """
+        Ensure outputs of the widget are possible, when errors are raised it
+        will return a message with what has caused the error
+        :return: 
+        """
+        errors = []
+        return errors
+
     def get_outputs(self):
         """Return the options as set in this plug-in widget.
 

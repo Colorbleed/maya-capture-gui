@@ -362,6 +362,10 @@ class App(QtWidgets.QWidget):
     def apply(self):
         """Run capture action with current settings"""
 
+        valid = self.validate_outputs()
+        if not valid:
+            return
+
         options = self.get_outputs()
         filename = options.get("filename", None)
 
@@ -432,6 +436,31 @@ class App(QtWidgets.QWidget):
             group_layout = QtWidgets.QVBoxLayout(group_widget)
             group_layout.addWidget(widget)
             layout.addWidget(group_widget)
+
+    def validate_outputs(self):
+        """
+        Check if the outputs of the widgets are good
+        :return: 
+        """
+
+        errors = list()
+        for widget in self._get_plugin_widgets():
+            widget_errors = widget.validate_outputs()
+            if not widget_errors:
+                continue
+
+            errors.extend(widget_errors)
+        nr_errors = len(errors)
+        if nr_errors > 0:
+            message_title = "%s Validation Error(s)" % nr_errors
+            message = "".join(["%s\n" % error for error in errors])
+            QtWidgets.QMessageBox.critical(self,
+                                           message_title,
+                                           message,
+                                           QtWidgets.QMessageBox.Ok)
+            return False
+
+        return True
 
     def get_outputs(self):
         """Return the settings for a capture as currently set in the 

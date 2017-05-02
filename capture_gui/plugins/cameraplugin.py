@@ -64,6 +64,17 @@ class CameraPlugin(capture_gui.plugin.Plugin):
                     self.cameras.setCurrentIndex(i)
                     return
 
+    def validate_outputs(self):
+
+        errors = []
+        camera = self.cameras.currentText()
+        if not cmds.objExists(camera):
+            errors.append("{} : Selected camera '{}' "
+                          "does not exist!".format(self.id, camera))
+            self.cameras.setStyleSheet("background-color: rgb(195, 0, 0)")
+
+        return errors
+
     def get_outputs(self):
         """Return currently selected camera from combobox."""
 
