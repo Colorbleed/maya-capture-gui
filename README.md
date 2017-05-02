@@ -70,3 +70,15 @@ app.viewer_start.connect(callback, QtCore.Qt.DirectConnection)
 # Show the app manually
 app.show()
 ```
+
+
+### Known issues
+
+##### Viewport Plugin _show_ menu close button sometimes appears off screen when torn off
+
+Tearing off the _show_ menu in the Viewport Plugin results in a menu
+with an off screen title bar when torn off near the top edge of the
+screen. This makes it hard to close the menu. To fix this either close
+the capture GUI (to close the menu) or make a new torn off version of
+the _show_ menu at a lower position on screen (this will close the
+previous torn off menu).
