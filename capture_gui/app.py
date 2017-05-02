@@ -37,12 +37,13 @@ class PreviewWidget(QtWidgets.QWidget):
     preview_width = 320
     preview_height = 180
 
-    def __init__(self, options_getter, parent=None):
+    def __init__(self, options_getter, validater, parent=None):
         QtWidgets.QWidget.__init__(self, parent=parent)
 
         # Add attributes
         self.initialized = False
         self.options_getter = options_getter
+        self.validater = validater
         self.preview = ClickLabel()
         self.preview.setFixedWidth(self.preview_width)
         self.preview.setFixedHeight(self.preview_height)
@@ -68,6 +69,11 @@ class PreviewWidget(QtWidgets.QWidget):
         # actually triggers a reset to frame 0. As such we sneak in the current
         # time into the undo queue to enforce correct undoing.
         cmds.currentTime(frame, update=True)
+
+        # check if plugin outputs are correct
+        validation = self.validater()
+        if not validation:
+            return
 
         with lib.no_undo():
             options = self.options_getter()
@@ -333,6 +339,7 @@ class App(QtWidgets.QWidget):
         # Add separate widgets
         self.widgetlibrary.addItem("Preview",
                                    PreviewWidget(self.get_outputs,
+                                                 self.validate,
                                                  parent=self),
                                    collapsed=True)
 
@@ -362,7 +369,7 @@ class App(QtWidgets.QWidget):
     def apply(self):
         """Run capture action with current settings"""
 
-        valid = self.validate_outputs()
+        valid = self.validate()
         if not valid:
             return
 
@@ -437,7 +444,7 @@ class App(QtWidgets.QWidget):
             group_layout.addWidget(widget)
             layout.addWidget(group_widget)
 
-    def validate_outputs(self):
+    def validate(self):
         """
         Check if the outputs of the widgets are good
         :return: 
@@ -445,15 +452,13 @@ class App(QtWidgets.QWidget):
 
         errors = list()
         for widget in self._get_plugin_widgets():
-            widget_errors = widget.validate_outputs()
-            if not widget_errors:
-                continue
+            widget_errors = widget.validate()
+            if widget_errors:
+                errors.extend(widget_errors)
 
-            errors.extend(widget_errors)
-        nr_errors = len(errors)
-        if nr_errors > 0:
-            message_title = "%s Validation Error(s)" % nr_errors
-            message = "".join(["%s\n" % error for error in errors])
+        if errors:
+            message_title = "%s Validation Error(s)" % len(errors)
+            message = "\n".join(errors)
             QtWidgets.QMessageBox.critical(self,
                                            message_title,
                                            message,

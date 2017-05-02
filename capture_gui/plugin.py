@@ -54,11 +54,13 @@ class Plugin(QtWidgets.QWidget):
     options_changed = QtCore.Signal()
     label_changed = QtCore.Signal(str)
     order = 0
+    highlight = "border: 1px solid red;"
+    validate_state = True
 
     def on_playblast_finished(self, options):
         pass
 
-    def validate_outputs(self):
+    def validate(self):
         """
         Ensure outputs of the widget are possible, when errors are raised it
         will return a message with what has caused the error

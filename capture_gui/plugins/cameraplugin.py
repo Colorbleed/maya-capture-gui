@@ -40,6 +40,7 @@ class CameraPlugin(capture_gui.plugin.Plugin):
 
         self.cameras.currentIndexChanged.connect(self.options_changed)
         self.options_changed.connect(self.on_update_label)
+        self.options_changed.connect(self.validate)
 
         # Force update of the label
         self.set_active_cam()
@@ -64,14 +65,16 @@ class CameraPlugin(capture_gui.plugin.Plugin):
                     self.cameras.setCurrentIndex(i)
                     return
 
-    def validate_outputs(self):
+    def validate(self):
 
         errors = []
         camera = self.cameras.currentText()
         if not cmds.objExists(camera):
             errors.append("{} : Selected camera '{}' "
                           "does not exist!".format(self.id, camera))
-            self.cameras.setStyleSheet("background-color: rgb(195, 0, 0)")
+            self.cameras.setStyleSheet(self.highlight)
+        else:
+            self.cameras.setStyleSheet("")
 
         return errors
 
