@@ -1,6 +1,17 @@
 # Maya Capture GUI RELEASES
 
+
+## 03 / 05 / 2017 - v1.1.1
+- Extended README with example of adding presets before launching the
+tool
+- Solved issue 0008
+  + Playback of images, frame padding ( #### ) solved
+  + View when finished works regardless of Save being checked
+- Solved issue 0019
+  + Non-chronological time range is not possible anymore
+
 ## 02 / 05 / 2017 - v1.1.0
+- Solved issue 0014
 - Added plugin validation function
 - Added app validation function to validate listed plugins
 

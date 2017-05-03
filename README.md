@@ -38,6 +38,7 @@ capture_gui.main()
 
 ### Advanced
 
+#### Callbacks
 Register a pre-view callback to allow a custom conversion or overlays on the 
 resulting footage in your pipeline (e.g. through FFMPEG)
 
@@ -69,6 +70,25 @@ app.viewer_start.connect(callback, QtCore.Qt.DirectConnection)
 
 # Show the app manually
 app.show()
+```
+
+#### Register presets
+
+```python
+import capture_gui.presets as presets
+
+# create a list of directories where the presets might be stored
+# Not the files! Always the directory
+directories = ["root/directory/folder",
+               "root/directory/other_folder"]
+
+# register the directories to check in the presets.discover function
+for directory in directories:
+    presets.registers_path(directory)
+
+# launch the capture gui with the registered paths
+import capture_gui
+capture_gui.main()
 ```
 
 
