@@ -78,7 +78,7 @@ class TimePlugin(capture_gui.plugin.Plugin):
 
     RangeTimeSlider = "Time Slider"
     RangeStartEnd = "Start/End"
-    CurrentFrame = "CurrentFrame"
+    CurrentFrame = "Current Frame"
     CustomFrames = "Custom Frames"
 
     def __init__(self, parent=None):
