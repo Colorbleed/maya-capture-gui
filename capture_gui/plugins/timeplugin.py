@@ -190,7 +190,7 @@ class TimePlugin(capture_gui.plugin.Plugin):
             self.custom_frames.setStyleSheet("")
 
             try:
-                parse_frames(self.custom_frames.text(), strict=True)
+                parse_frames(self.custom_frames.text())
             except ValueError as exc:
                 errors.append("{} : Invalid frame description: "
                               "{}".format(self.id, exc))
