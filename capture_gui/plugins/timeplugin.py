@@ -11,6 +11,64 @@ import capture_gui.plugin
 log = logging.getLogger("Time Range")
 
 
+def parse_frames(string, strict=True):
+    """Parse the resulting frames list from a frame list string.
+
+    Examples
+        >>> parse_frames("0-3;30")
+        [0, 1, 2, 3, 30]
+        >>> parse_frames("0,2,4,-10")
+        [0, 2, 4, -10]
+        >>> parse_frames("-10--5,-2")
+        [-10, -9, -8, -7, -6, -5, -2]
+
+    Args:
+        string (str): The string to parse for frames.
+
+    Returns:
+        list: A list of frames
+
+    """
+
+    result = list()
+
+    if not string:
+        return result
+
+    if not re.match("^[-0-9,; ]*$", string):
+        raise ValueError("Invalid symbols in frame string: {}".format(string))
+
+    for raw in re.split(";|,", string):
+
+        # Skip empty elements
+        value = raw.strip().replace(" ", "")
+        if not value:
+            if raw:
+                raise ValueError("Empty frame entry: '{0}'".format(raw))
+            continue
+
+        # Check for sequences (1-20) including negatives (-10--8)
+        sequence = re.search("(-?[0-9]+)-(-?[0-9]+)", value)
+
+        # Sequence
+        if sequence:
+            start, end = sequence.groups()
+            frames = range(int(start), int(end) + 1)
+            result.extend(frames)
+
+        # Single frame
+        else:
+            try:
+                frame = int(value)
+            except ValueError:
+                raise ValueError("Invalid frame description: "
+                                 "'{0}'".format(value))
+
+            result.append(frame)
+
+    return result
+
+
 class TimePlugin(capture_gui.plugin.Plugin):
     """Widget for time based options"""
 
@@ -61,6 +119,7 @@ class TimePlugin(capture_gui.plugin.Plugin):
         # and the end is never lower than start
         self.end.valueChanged.connect(self._ensure_start)
         self.start.valueChanged.connect(self._ensure_end)
+        self.custom_frames.textChanged.connect(self.validate)
 
         self.on_mode_changed()  # force enabled state refresh
 
@@ -73,56 +132,6 @@ class TimePlugin(capture_gui.plugin.Plugin):
 
     def _ensure_end(self, value):
         self.end.setValue(max(self.end.value(), value))
-
-    def parse_frames(self, string):
-        """Parse the resulting frames list from a frame list string.
-
-        Examples
-            >>> parse_frames("0-3;30")
-            [0, 1, 2, 3, 30]
-            >>> parse_frames("0,2,4,-10")
-            [0, 2, 4, -10]
-            >>> parse_frames("-10--5,-2")
-            [-10, -9, -8, -7, -6, -5, -2]
-
-        Args:
-            string (str): The string to parse for frames.
-
-        Returns:
-            list: A list of frames
-
-        """
-
-        result = list()
-        for raw in re.split(";|,", string):
-
-            # Skip empty elements
-            value = raw.strip().replace(" ", "")
-            if not value:
-                if raw:
-                    log.warning("Empty frame entry: '{0}'".format(raw))
-                continue
-
-            # Check for sequences (1-20) including negatives (-10--8)
-            sequence = re.search("(-?[0-9]+)-(-?[0-9]+)", value)
-
-            # Sequence
-            if sequence:
-                start, end = sequence.groups()
-                frames = range(int(start), int(end) + 1)
-                result.extend(frames)
-
-            # Single frame
-            else:
-                try:
-                    frame = int(value)
-                except ValueError:
-                    log.warning(
-                        "Invalid frame description: '{0}'".format(value))
-                    continue
-                result.append(frame)
-
-        return result
 
     def on_mode_changed(self, emit=True):
         """
@@ -172,6 +181,23 @@ class TimePlugin(capture_gui.plugin.Plugin):
         if emit:
             self.options_changed.emit()
 
+    def validate(self):
+        errors = []
+
+        if self.mode.currentText() == self.CustomFrames:
+
+            # Reset
+            self.custom_frames.setStyleSheet("")
+
+            try:
+                parse_frames(self.custom_frames.text(), strict=True)
+            except ValueError as exc:
+                errors.append("{} : Invalid frame description: "
+                              "{}".format(self.id, exc))
+                self.custom_frames.setStyleSheet(self.highlight)
+
+        return errors
+
     def get_outputs(self, panel=""):
         """
         Get the options of the Time Widget
@@ -198,7 +224,7 @@ class TimePlugin(capture_gui.plugin.Plugin):
             end = frame
 
         elif mode == self.CustomFrames:
-            frames = self.parse_frames(self.custom_frames.text())
+            frames = parse_frames(self.custom_frames.text())
             start = None
             end = None
         else:
