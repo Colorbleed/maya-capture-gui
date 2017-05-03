@@ -1,5 +1,11 @@
 # Maya Capture GUI RELEASES
 
+## 03 / 05 / 2017 - v1.3.1
+- Solved issue #0026
+  + Added "Raw frame number" checkbox, when using custom frames the
+user can enable to use the actual frame numbers in the file name.
+Example: playblast.0012.png
+
 ## 03 / 05 / 2017 - v1.3.0
 - Changed mode name in Time Plugin, old presets incompatible with current version
 - Removed unused keyword argument
