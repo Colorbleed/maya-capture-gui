@@ -37,12 +37,13 @@ class PreviewWidget(QtWidgets.QWidget):
     preview_width = 320
     preview_height = 180
 
-    def __init__(self, options_getter, parent=None):
+    def __init__(self, options_getter, validator, parent=None):
         QtWidgets.QWidget.__init__(self, parent=parent)
 
         # Add attributes
         self.initialized = False
         self.options_getter = options_getter
+        self.validator = validator
         self.preview = ClickLabel()
         self.preview.setFixedWidth(self.preview_width)
         self.preview.setFixedHeight(self.preview_height)
@@ -68,6 +69,11 @@ class PreviewWidget(QtWidgets.QWidget):
         # actually triggers a reset to frame 0. As such we sneak in the current
         # time into the undo queue to enforce correct undoing.
         cmds.currentTime(frame, update=True)
+
+        # check if plugin outputs are correct
+        valid = self.validator()
+        if not valid:
+            return
 
         with lib.no_undo():
             options = self.options_getter()
@@ -333,6 +339,7 @@ class App(QtWidgets.QWidget):
         # Add separate widgets
         self.widgetlibrary.addItem("Preview",
                                    PreviewWidget(self.get_outputs,
+                                                 self.validate,
                                                  parent=self),
                                    collapsed=True)
 
@@ -362,7 +369,13 @@ class App(QtWidgets.QWidget):
     def apply(self):
         """Run capture action with current settings"""
 
+        valid = self.validate()
+        if not valid:
+            return
+
         options = self.get_outputs()
+        if options["frame"] is not None:
+            options["raw_frame_numbers"] = True
         filename = options.get("filename", None)
 
         self.playblast_start.emit(options)
@@ -412,6 +425,7 @@ class App(QtWidgets.QWidget):
             return
 
         widget = plugin(parent=self)
+        widget.initialize()
         widget.options_changed.connect(self.on_widget_settings_changed)
         self.playblast_finished.connect(widget.on_playblast_finished)
 
@@ -432,6 +446,29 @@ class App(QtWidgets.QWidget):
             group_layout = QtWidgets.QVBoxLayout(group_widget)
             group_layout.addWidget(widget)
             layout.addWidget(group_widget)
+
+    def validate(self):
+        """
+        Check if the outputs of the widgets are good
+        :return: 
+        """
+
+        errors = list()
+        for widget in self._get_plugin_widgets():
+            widget_errors = widget.validate()
+            if widget_errors:
+                errors.extend(widget_errors)
+
+        if errors:
+            message_title = "%s Validation Error(s)" % len(errors)
+            message = "\n".join(errors)
+            QtWidgets.QMessageBox.critical(self,
+                                           message_title,
+                                           message,
+                                           QtWidgets.QMessageBox.Ok)
+            return False
+
+        return True
 
     def get_outputs(self):
         """Return the settings for a capture as currently set in the 

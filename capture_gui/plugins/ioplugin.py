@@ -177,12 +177,14 @@ class IoPlugin(plugin.Plugin):
         :rtype: dict
         """
 
-        output = {"filename": None}
+        output = {"filename": None,
+                  "viewer": self.open_viewer.isChecked()}
+
         use_default = self.use_default.isChecked()
         save = self.save_file.isChecked()
         # run playblast, don't copy to dir
         if not save:
-            return
+            return output
 
         # run playblast, copy file to given directory
         # get directory from inputs
@@ -198,7 +200,6 @@ class IoPlugin(plugin.Plugin):
             path = lib.default_output()
 
         output["filename"] = path
-        output["viewer"] = self.open_viewer.isChecked()
 
         return output
 
