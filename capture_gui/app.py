@@ -37,13 +37,13 @@ class PreviewWidget(QtWidgets.QWidget):
     preview_width = 320
     preview_height = 180
 
-    def __init__(self, options_getter, validater, parent=None):
+    def __init__(self, options_getter, validator, parent=None):
         QtWidgets.QWidget.__init__(self, parent=parent)
 
         # Add attributes
         self.initialized = False
         self.options_getter = options_getter
-        self.validater = validater
+        self.validator = validator
         self.preview = ClickLabel()
         self.preview.setFixedWidth(self.preview_width)
         self.preview.setFixedHeight(self.preview_height)
@@ -71,8 +71,8 @@ class PreviewWidget(QtWidgets.QWidget):
         cmds.currentTime(frame, update=True)
 
         # check if plugin outputs are correct
-        validation = self.validater()
-        if not validation:
+        valid = self.validator()
+        if not valid:
             return
 
         with lib.no_undo():
@@ -374,6 +374,8 @@ class App(QtWidgets.QWidget):
             return
 
         options = self.get_outputs()
+        if options["frame"] is not None:
+            options["raw_frame_numbers"] = True
         filename = options.get("filename", None)
 
         self.playblast_start.emit(options)
@@ -483,7 +485,6 @@ class App(QtWidgets.QWidget):
                 continue
 
             for key, value in widget_outputs.items():
-                print key, value
 
                 # We merge dictionaries by updating them so we have
                 # the "mixed" values of both settings
