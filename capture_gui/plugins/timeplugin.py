@@ -44,16 +44,27 @@ class TimePlugin(capture_gui.plugin.Plugin):
         self._layout.addWidget(self.start)
         self._layout.addWidget(self.end)
 
+        # Connect callbacks to ensure start is never higher then end
+        # and the end is never lower than start
+        self.end.valueChanged.connect(self._ensure_start)
+        self.start.valueChanged.connect(self._ensure_end)
+
         self.on_mode_changed()  # force enabled state refresh
 
         self.mode.currentIndexChanged.connect(self.on_mode_changed)
         self.start.valueChanged.connect(self.on_mode_changed)
         self.end.valueChanged.connect(self.on_mode_changed)
 
+    def _ensure_start(self, value):
+        self.start.setValue(min(self.start.value(), value))
+
+    def _ensure_end(self, value):
+        self.end.setValue(max(self.end.value(), value))
+
     def on_mode_changed(self, emit=True):
         """
         Update the GUI when the user updated the time range or settings
-        
+
         :param emit: Whether to emit the options changed signal
         :type emit: bool
 
