@@ -1,7 +1,7 @@
 # Maya Capture GUI RELEASES
 
 
-## 03 / 05 / 2017 - v1.1.1
+## 03 / 05 / 2017 - v1.2.0
 - Extended README with example of adding presets before launching the
 tool
 - Solved issue 0008
@@ -9,6 +9,8 @@ tool
   + View when finished works regardless of Save being checked
 - Solved issue 0019
   + Non-chronological time range is not possible anymore
+- Solved issue 0020
+  + Added custom frame range, similar to print pages in Word
 
 ## 02 / 05 / 2017 - v1.1.0
 - Solved issue 0014
