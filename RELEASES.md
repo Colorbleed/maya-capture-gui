@@ -1,5 +1,8 @@
 # Maya Capture GUI RELEASES
 
+## 03 / 05 / 2017 - v1.3.0
+- Changed mode name in Time Plugin, old presets incompatible with current version
+- Removed unused keyword argument
 
 ## 03 / 05 / 2017 - v1.2.0
 - Extended README with example of adding presets before launching the

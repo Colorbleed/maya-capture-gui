@@ -11,7 +11,7 @@ import capture_gui.plugin
 log = logging.getLogger("Time Range")
 
 
-def parse_frames(string, strict=True):
+def parse_frames(string):
     """Parse the resulting frames list from a frame list string.
 
     Examples
