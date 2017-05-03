@@ -425,6 +425,7 @@ class App(QtWidgets.QWidget):
             return
 
         widget = plugin(parent=self)
+        widget.initialize()
         widget.options_changed.connect(self.on_widget_settings_changed)
         self.playblast_finished.connect(widget.on_playblast_finished)
 
