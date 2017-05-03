@@ -74,6 +74,8 @@ app.show()
 
 #### Register preset paths
 
+Register a preset path that will be used by the capture gui to load default presets from.
+
 ```python
 import capture_gui.presets
 import capture_gui
