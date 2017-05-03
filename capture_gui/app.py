@@ -483,6 +483,7 @@ class App(QtWidgets.QWidget):
                 continue
 
             for key, value in widget_outputs.items():
+                print key, value
 
                 # We merge dictionaries by updating them so we have
                 # the "mixed" values of both settings

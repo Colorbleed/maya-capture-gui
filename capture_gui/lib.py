@@ -155,7 +155,18 @@ def _fix_playblast_output_path(filepath):
     # Fix: playblast not returning correct filename (with extension)
     # Lets assume the most recently modified file is the correct one.
     if not os.path.exists(filepath):
-        files = glob.glob("{}.*".format(filepath))
+        directory = os.path.dirname(filepath)
+        filename = os.path.basename(filepath)
+        # check if the filepath is has frame based filename
+        # example : capture.####.png
+        parts = filename.split(".")
+        if len(parts) == 3:
+            query = os.path.join(directory, "{}.*.{}".format(parts[0],
+                                                             parts[-1]))
+            files = glob.glob(query)
+        else:
+            files = glob.glob("{}.*".format(filepath))
+
         if not files:
             raise RuntimeError("Couldn't find playblast from: "
                                "{0}".format(filepath))
