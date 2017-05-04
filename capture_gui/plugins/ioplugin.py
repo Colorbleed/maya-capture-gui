@@ -88,7 +88,7 @@ class IoPlugin(plugin.Plugin):
         filename_hlayout.addWidget(filename_label)
         filename_hlayout.addWidget(self.filename)
         self.filename_widget.setLayout(filename_hlayout)
-        self.filename.setPlaceholderText("Playblast")
+        self.filename.setPlaceholderText("playblast")
         # endregion Filename
 
         # region Recent Playblast
