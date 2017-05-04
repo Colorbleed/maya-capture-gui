@@ -100,6 +100,7 @@ class IoPlugin(plugin.Plugin):
         filename_hlayout.addWidget(filename_label)
         filename_hlayout.addWidget(self.filename)
         self.filename_widget.setLayout(filename_hlayout)
+        self.filename.setPlaceholderText("playblast")
         # endregion Filename
 
         # region Recent Playblast
@@ -203,11 +204,8 @@ class IoPlugin(plugin.Plugin):
         # get directory from inputs
         if not use_default:
             directory = self.directory_path.text()
-            filename = self.filename.text()
-            if filename:
-                path = os.path.join(directory, filename)
-            else:
-                path = directory
+            filename = self.filename.text() or "playblast"
+            path = os.path.join(directory, filename)
         else:
             # get directory from selected folder and given name
             path = lib.default_output()
