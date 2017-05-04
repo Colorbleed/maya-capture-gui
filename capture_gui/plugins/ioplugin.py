@@ -7,6 +7,10 @@ from capture_gui import plugin, lib
 log = logging.getLogger("IO")
 
 
+def parse_tokens(string):
+    pass
+
+
 class IoAction(QtWidgets.QAction):
 
     def __init__(self, parent, filepath):
