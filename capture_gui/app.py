@@ -374,9 +374,6 @@ class App(QtWidgets.QWidget):
             return
 
         options = self.get_outputs()
-        frames = options.get("frame", None)
-        if frames is None:
-            options["raw_frame_numbers"] = False
         filename = options.get("filename", None)
 
         self.playblast_start.emit(options)
