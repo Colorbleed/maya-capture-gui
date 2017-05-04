@@ -97,7 +97,7 @@ in the given filename.
 import capture.tokens
 import capture_gui
 
-# this is an example function which retrieves the name of the current renderer
+# this is an example function which retrieves the name of the current user
 def get_user_name():
     import getpass
     return getpass.getuser()
