@@ -106,9 +106,9 @@ class TimePlugin(capture_gui.plugin.Plugin):
 
         # unique frames field
         self.custom_frames = QtWidgets.QLineEdit()
+        self.custom_frames.setFixedHeight(frame_input_height)
         self.custom_frames.setPlaceholderText("1-20,25;50;75,100-150")
         self.custom_frames.setVisible(False)
-        self.custom_frames.setFixedHeight(frame_input_height)
 
         self._layout.addWidget(self.mode)
         self._layout.addWidget(self.start)

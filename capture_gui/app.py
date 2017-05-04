@@ -321,7 +321,7 @@ class App(QtWidgets.QWidget):
         title_version = "{} v{}".format(title, version.version)
         self.setObjectName(self.object_name)
         self.setWindowTitle(title_version)
-        self.setMinimumWidth(400)
+        self.setMinimumWidth(440)
 
         # Set dialog window flags so the widget can be correctly parented
         # to Maya main window

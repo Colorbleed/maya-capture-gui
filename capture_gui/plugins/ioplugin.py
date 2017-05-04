@@ -59,9 +59,11 @@ class IoPlugin(plugin.Plugin):
         self.save_file = QtWidgets.QCheckBox(text="Save")
         self.use_default = QtWidgets.QCheckBox(text="Use Default")
         self.open_viewer = QtWidgets.QCheckBox(text="View when finished")
+        self.raw_frame_numbers = QtWidgets.QCheckBox(text="Raw frame numbers")
         checkbox_hlayout.addWidget(self.save_file)
         checkbox_hlayout.addWidget(self.use_default)
         checkbox_hlayout.addWidget(self.open_viewer)
+        checkbox_hlayout.addWidget(self.raw_frame_numbers)
         checkbox_hlayout.addStretch(True)
         # endregion Checkboxes
 
@@ -188,6 +190,7 @@ class IoPlugin(plugin.Plugin):
         """
 
         output = {"filename": None,
+                  "raw_frame_numbers": self.raw_frame_numbers.isChecked(),
                   "viewer": self.open_viewer.isChecked()}
 
         use_default = self.use_default.isChecked()
@@ -214,17 +217,19 @@ class IoPlugin(plugin.Plugin):
         return output
 
     def get_inputs(self, as_preset):
-        return_values = {"directory": self.directory_path.text(),
-                         "name": self.filename.text(),
-                         "use_default": self.use_default.isChecked(),
-                         "save_file": self.save_file.isChecked(),
-                         "open_finished": self.open_viewer.isChecked(),
-                         "recent_playblasts": self.recent_playblasts}
+        inputs = {"directory": self.directory_path.text(),
+                  "name": self.filename.text(),
+                  "use_default": self.use_default.isChecked(),
+                  "save_file": self.save_file.isChecked(),
+                  "open_finished": self.open_viewer.isChecked(),
+                  "recent_playblasts": self.recent_playblasts,
+                  "raw_frame_numbers": self.raw_frame_numbers.isChecked()
+                  }
 
         if as_preset:
-            return_values["recent_playblasts"] = []
+            inputs["recent_playblasts"] = []
 
-        return return_values
+        return inputs
 
     def apply_inputs(self, settings):
 
@@ -233,6 +238,7 @@ class IoPlugin(plugin.Plugin):
         use_default = settings.get("use_default", True)
         save_file = settings.get("save_file", True)
         open_finished = settings.get("open_finished", True)
+        raw_frame_numbers = settings.get("raw_frame_numbers", False)
 
         previous_playblasts = settings.get("recent_playblasts", [])
 
@@ -240,6 +246,7 @@ class IoPlugin(plugin.Plugin):
         self.use_default.setChecked(use_default)
         self.save_file.setChecked(save_file)
         self.open_viewer.setChecked(open_finished)
+        self.raw_frame_numbers.setChecked(raw_frame_numbers)
 
         for playblast in reversed(previous_playblasts):
             self.add_playblast(playblast)
