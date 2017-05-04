@@ -1,5 +1,8 @@
 # Maya Capture GUI RELEASES
 
+## 04 / 05 / 2017 - v1.3.1
+- Added token support for filename, example:  <Scene>_<Camera>_<RenderLayer>
+
 ## 03 / 05 / 2017 - v1.3.0
 - Changed mode name in Time Plugin, old presets incompatible with current version
 - Removed unused keyword argument

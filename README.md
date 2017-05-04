@@ -88,6 +88,27 @@ capture_gui.presets.register_path(path)
 capture_gui.main()
 ```
 
+#### Register tokens and translators
+
+Register a token and translator that will be used to translate any tokens
+in the given filename.
+
+```python
+import capture.tokens
+import capture_gui
+
+# this is an example function which retrieves the name of the current renderer
+def get_user_name():
+    import getpass
+    return getpass.getuser()
+
+# register the token <User> and pass the function which should be called
+# when this token is present.
+# The label is for the right mouse button menu's readability.
+capture.tokens.register_token("<User>",
+                              lambda options : get_user_name(),
+                              label="Insert current user's name")
+```
 
 ### Known issues
 

@@ -1,14 +1,12 @@
 import os
 import logging
+from functools import partial
 
 from capture_gui.vendor.Qt import QtCore, QtWidgets
 from capture_gui import plugin, lib
+from capture_gui import tokens
 
 log = logging.getLogger("IO")
-
-
-def parse_tokens(string):
-    pass
 
 
 class IoAction(QtWidgets.QAction):
@@ -84,11 +82,19 @@ class IoPlugin(plugin.Plugin):
 
         # region Filename
         self.filename_widget = QtWidgets.QWidget()
+
+        # line edit
+        self.filename = QtWidgets.QLineEdit()
+        self.filename.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.filename.customContextMenuRequested.connect(self.show_token_menu)
+
+        # widget's layout
         filename_hlayout = QtWidgets.QHBoxLayout()
         filename_hlayout.setContentsMargins(0, 0, 0, 0)
         filename_label = QtWidgets.QLabel("File Name :")
         filename_label.setFixedWidth(60)
-        self.filename = QtWidgets.QLineEdit()
+
+        # assemble filename widget
         filename_hlayout.addWidget(filename_label)
         filename_hlayout.addWidget(self.filename)
         self.filename_widget.setLayout(filename_hlayout)
@@ -239,3 +245,27 @@ class IoPlugin(plugin.Plugin):
             self.add_playblast(playblast)
 
         self.directory_path.setText(directory)
+
+    def token_menu(self):
+        """
+        Build the token menu based on the registered tokens
+        :return: 
+        """
+        menu = QtWidgets.QMenu(self)
+        registered_tokens = tokens.list_tokens()
+
+        for token, value in registered_tokens.items():
+
+            action = QtWidgets.QAction(value['label'], menu)
+
+            fn = partial(self.filename.insert, token)
+            action.triggered.connect(fn)
+
+            menu.addAction(action)
+
+        return menu
+
+    def show_token_menu(self, pos):
+        menu = self.token_menu()
+        globalpos = QtCore.QPoint(self.filename.mapToGlobal(pos))
+        menu.exec_(globalpos)

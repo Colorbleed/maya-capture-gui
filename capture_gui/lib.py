@@ -16,6 +16,13 @@ from .vendor.Qt import QtWidgets
 log = logging.getLogger(__name__)
 
 
+def get_current_scenename():
+    path = cmds.file(query=True, sceneName=True)
+    if path:
+        return os.path.splitext(os.path.basename(path))[0]
+    return None
+
+
 def get_current_camera():
     """Returns the currently active camera.
 
@@ -104,6 +111,10 @@ def get_time_slider_range(highlighted=True,
     if not highlightedOnly:
         return [cmds.playbackOptions(query=True, minTime=True),
                 cmds.playbackOptions(query=True, maxTime=True)]
+
+
+def get_current_renderlayer():
+    return cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)
 
 
 def get_plugin_shapes():
@@ -269,8 +280,7 @@ def default_output():
 
     workspace = cmds.workspace(query=True, rootDirectory=True)
     folder = cmds.workspace(fileRuleEntry="images")
-    scene_name = cmds.file(query=True, sceneName=True)
-    scene = os.path.splitext(os.path.basename(scene_name))[0] or "playblast"
+    scene = get_current_scenename() or "playblast"
 
     # get current datetime
     timestamp = datetime.datetime.today()
