@@ -11,6 +11,7 @@ from . import lib
 from . import plugin
 from . import presets
 from . import version
+from . import tokens
 from .accordion import AccordionWidget
 
 log = logging.getLogger("Capture Gui")
@@ -378,8 +379,10 @@ class App(QtWidgets.QWidget):
 
         self.playblast_start.emit(options)
 
+        # Format the tokens in the filename
+        options["filename"] = tokens.format_tokens(filename, options)
+
         # Perform capture
-        options["filename"] = filename
         options["filename"] = lib.capture_scene(options)
 
         self.playblast_finished.emit(options)
