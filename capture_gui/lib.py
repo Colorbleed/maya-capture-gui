@@ -16,6 +16,37 @@ from .vendor.Qt import QtWidgets
 log = logging.getLogger(__name__)
 
 
+OBJECT_TYPES = {'Cameras': 'cameras',
+                'Control Vertices': 'controlVertices',
+                'Deformers': 'deformers',
+                'Dimensions': 'dimensions',
+                'Dynamic Constraints': 'dynamicConstraints',
+                'Dynamics': 'dynamics',
+                'Fluids': 'fluids',
+                'Follicles': 'follicles',
+                'Grid': 'grid',
+                'Hair Systems': 'hairSystems',
+                'Handles': 'handles',
+                'Hulls': 'hulls',
+                'Ik Handles': 'ikHandles',
+                'ImagePlane': 'imagePlane',
+                'Joints': 'joints',
+                'Lights': 'lights',
+                'Locators': 'locators',
+                'Manipulators': 'manipulators',
+                'nCloths': 'nCloths',
+                'nParticles': 'nParticles',
+                'nRigids': 'nRigids',
+                'NURBS Curves': 'nurbsCurves',
+                'NURBS Surfaces': 'nurbsSurfaces',
+                'Pivots': 'pivots',
+                'Planes': 'planes',
+                'Polygons': 'polymeshes',
+                'Strokes': 'strokes',
+                'Subdiv Surfaces': 'subdivSurfaces',
+                'Textures': 'textures'}
+
+
 def get_current_scenename():
     path = cmds.file(query=True, sceneName=True)
     if path:
@@ -71,8 +102,8 @@ def get_current_camera():
 
 def get_active_editor():
     """Return the active editor panel to playblast with"""
-    cmds.currentTime(
-        cmds.currentTime(query=True))  # fixes `cmds.playblast` undo bug
+    # fixes `cmds.playblast` undo bug
+    cmds.currentTime(cmds.currentTime(query=True))
     panel = cmds.playblast(activeEditor=True)
     return panel.split("|")[-1]
 
@@ -216,10 +247,27 @@ def capture_scene(options):
     # Remove panel key since it's internal value to capture_gui
     options.pop("panel", None)
 
+    print options["display_options"]
+
     path = capture.capture(**options)
     path = _fix_playblast_output_path(path)
 
     return path
+
+
+def get_background_colors():
+    """
+    Get the colors of the background to pass to the 
+    :return: collection of color values {type: [value, value, value]}
+    :rtype: dict
+    """
+
+    return {'background': cmds.displayRGBColor('background',
+                                               query=True),
+            'backgroundTop': cmds.displayRGBColor('backgroundTop',
+                                                  query=True),
+            'backgroundBottom': cmds.displayRGBColor('backgroundBottom',
+                                                     query=True)}
 
 
 def browse(path=None):
