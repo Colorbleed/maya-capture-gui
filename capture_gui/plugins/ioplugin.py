@@ -54,14 +54,13 @@ class IoPlugin(plugin.Plugin):
         self.setLayout(self._layout)
 
         # region Checkboxes
-        checkbox_hlayout = QtWidgets.QHBoxLayout()
-        checkbox_hlayout.setContentsMargins(5, 0, 5, 0)
         self.save_file = QtWidgets.QCheckBox(text="Save")
-        self.use_default = QtWidgets.QCheckBox(text="Use Default")
         self.open_viewer = QtWidgets.QCheckBox(text="View when finished")
         self.raw_frame_numbers = QtWidgets.QCheckBox(text="Raw frame numbers")
+
+        checkbox_hlayout = QtWidgets.QHBoxLayout()
+        checkbox_hlayout.setContentsMargins(5, 0, 5, 0)
         checkbox_hlayout.addWidget(self.save_file)
-        checkbox_hlayout.addWidget(self.use_default)
         checkbox_hlayout.addWidget(self.open_viewer)
         checkbox_hlayout.addWidget(self.raw_frame_numbers)
         checkbox_hlayout.addStretch(True)
@@ -69,17 +68,20 @@ class IoPlugin(plugin.Plugin):
 
         # region Directory
         self.dir_widget = QtWidgets.QWidget()
+
+        self.browse = QtWidgets.QPushButton("Browse")
+        self.file_path = QtWidgets.QLineEdit()
+        self.file_path.setPlaceholderText("Select a directory")
+        self.file_path.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.file_path.customContextMenuRequested.connect(self.show_token_menu)
+
         dir_hlayout = QtWidgets.QHBoxLayout()
         dir_hlayout.setContentsMargins(0, 0, 0, 0)
         dir_label = QtWidgets.QLabel("Directory :")
         dir_label.setFixedWidth(60)
-        self.browse = QtWidgets.QPushButton("Browse")
-        self.directory_path = QtWidgets.QLineEdit()
-        self.directory_path.setPlaceholderText("Select a directory")
-        self.directory_path.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.directory_path.customContextMenuRequested.connect(self.show_token_menu)
+
         dir_hlayout.addWidget(dir_label)
-        dir_hlayout.addWidget(self.directory_path)
+        dir_hlayout.addWidget(self.file_path)
         dir_hlayout.addWidget(self.browse)
         self.dir_widget.setLayout(dir_hlayout)
         # endregion Directory
@@ -119,7 +121,7 @@ class IoPlugin(plugin.Plugin):
 
         # Maya's browser return Linux based file paths to ensure Windows is
         # supported we use normpath
-        self.directory_path.setText(os.path.normpath(lib.browse()))
+        self.file_path.setText(os.path.normpath(lib.browse()))
 
     def add_playblast(self, item):
         """
@@ -164,18 +166,14 @@ class IoPlugin(plugin.Plugin):
                   "raw_frame_numbers": self.raw_frame_numbers.isChecked(),
                   "viewer": self.open_viewer.isChecked()}
 
-        use_default = self.use_default.isChecked()
         save = self.save_file.isChecked()
-        # run playblast, don't copy to dir
         if not save:
             return output
 
-        # run playblast, copy file to given directory
-        # get directory from inputs
-        if not use_default:
-            path = self.directory_path.text()
-        else:
-            # get directory from selected folder and given name
+        # get path, if nothing is set fall back to default
+        # project/images/playblast
+        path = self.file_path.text()
+        if not path:
             path = lib.default_output()
 
         output["filename"] = path
@@ -183,8 +181,7 @@ class IoPlugin(plugin.Plugin):
         return output
 
     def get_inputs(self, as_preset):
-        inputs = {"name": self.directory_path.text(),
-                  "use_default": self.use_default.isChecked(),
+        inputs = {"name": self.file_path.text(),
                   "save_file": self.save_file.isChecked(),
                   "open_finished": self.open_viewer.isChecked(),
                   "recent_playblasts": self.recent_playblasts,
@@ -198,14 +195,11 @@ class IoPlugin(plugin.Plugin):
     def apply_inputs(self, settings):
 
         directory = settings.get("name", None)
-        use_default = settings.get("use_default", True)
         save_file = settings.get("save_file", True)
         open_finished = settings.get("open_finished", True)
         raw_frame_numbers = settings.get("raw_frame_numbers", False)
-
         previous_playblasts = settings.get("recent_playblasts", [])
 
-        self.use_default.setChecked(use_default)
         self.save_file.setChecked(save_file)
         self.open_viewer.setChecked(open_finished)
         self.raw_frame_numbers.setChecked(raw_frame_numbers)
@@ -213,7 +207,7 @@ class IoPlugin(plugin.Plugin):
         for playblast in reversed(previous_playblasts):
             self.add_playblast(playblast)
 
-        self.directory_path.setText(directory)
+        self.file_path.setText(directory)
 
     def token_menu(self):
         """
@@ -227,7 +221,7 @@ class IoPlugin(plugin.Plugin):
 
         for token, value in registered_tokens.items():
             action = QtWidgets.QAction(value['label'], menu)
-            fn = partial(self.directory_path.insert, token)
+            fn = partial(self.file_path.insert, token)
             action.triggered.connect(fn)
             menu.addAction(action)
 
@@ -236,5 +230,5 @@ class IoPlugin(plugin.Plugin):
     def show_token_menu(self, pos):
         """Show custom manu on position of widget"""
         menu = self.token_menu()
-        globalpos = QtCore.QPoint(self.directory_path.mapToGlobal(pos))
+        globalpos = QtCore.QPoint(self.file_path.mapToGlobal(pos))
         menu.exec_(globalpos)
