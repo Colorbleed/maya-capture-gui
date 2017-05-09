@@ -97,24 +97,6 @@ class IoPlugin(plugin.Plugin):
         self._layout.addWidget(self.play_recent)
 
         self.browse.clicked.connect(self.get_save_directory)
-        self.use_default.stateChanged.connect(self.toggle_use_default)
-        self.save_file.stateChanged.connect(self.toggle_save)
-
-        # set state of save widgets
-        self.toggle_save()
-        self.toggle_use_default()
-
-    def toggle_save(self):
-        """Check to enable copy the playblast to a directory"""
-
-        state = self.save_file.isChecked()
-        self.use_default.setEnabled(state)
-
-    def toggle_use_default(self):
-        """Toggle if the file name and directory widgets are enabled"""
-
-        state = self.use_default.isChecked()
-        self.dir_widget.setVisible(not state)
 
     def get_save_directory(self):
         """Return file path in which the file will be saved"""
