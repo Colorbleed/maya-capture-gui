@@ -379,10 +379,26 @@ class App(QtWidgets.QWidget):
 
         self.playblast_start.emit(options)
 
-        # Format the tokens in the filename
-        options["filename"] = tokens.format_tokens(filename, options)
+        # The filename can be `None` when the
+        # playblast will *not* be saved.
+        if filename is not None:
+            # Format the tokens in the filename
+            filename = tokens.format_tokens(filename, options)
 
-        # Perform capture
+            # expand environment variables
+            filename = os.path.expandvars(filename)
+
+            # Make relative paths absolute to the "images" file rule by default
+            if not os.path.isabs(filename):
+                root = lib.get_project_rule("images")
+                filename = os.path.join(root, filename)
+
+            # normalize (to remove double slashes and alike)
+            filename = os.path.normpath(filename)
+
+        options["filename"] = filename
+
+        # Perform capture and store returned filename with extension
         options["filename"] = lib.capture_scene(options)
 
         self.playblast_finished.emit(options)
