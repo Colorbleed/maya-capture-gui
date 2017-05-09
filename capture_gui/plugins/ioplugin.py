@@ -202,7 +202,8 @@ class IoPlugin(plugin.Plugin):
         registered_tokens = tokens.list_tokens()
 
         for token, value in registered_tokens.items():
-            action = QtWidgets.QAction(value['label'], menu)
+            label = "{} \t{}".format(token, value['label'])
+            action = QtWidgets.QAction(label, menu)
             fn = partial(self.file_path.insert, token)
             action.triggered.connect(fn)
             menu.addAction(action)
