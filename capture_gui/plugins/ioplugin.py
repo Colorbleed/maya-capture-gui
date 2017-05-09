@@ -141,7 +141,7 @@ class IoPlugin(plugin.Plugin):
         # supported we use normpath
         browsed_path = os.path.normpath(lib.browse())
         filename = browsed_path.split(os.path.sep)[-1]
-        filepath = browsed_path.split(filename)[0]
+        filepath = browsed_path.rsplit(filename, 1)[0]
 
         self.directory_path.setText(filepath)
         self.filename.setText(filename)

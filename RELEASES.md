@@ -1,5 +1,9 @@
 # Maya Capture GUI RELEASES
 
+## 04 / 05 / 2017 - v1.3.2
+- Solved issue #0030
+  + Retrieved file path from "Browse" doesn't split unnecessary
+
 ## 04 / 05 / 2017 - v1.3.1
 - Added token support for filename, example:  <Scene>_<Camera>_<RenderLayer>
 - Solved issue #0026
