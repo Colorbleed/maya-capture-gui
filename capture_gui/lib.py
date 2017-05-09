@@ -246,8 +246,6 @@ def capture_scene(options):
     # Remove panel key since it's internal value to capture_gui
     options.pop("panel", None)
 
-    print options["display_options"]
-
     path = capture.capture(**options)
     path = _fix_playblast_output_path(path)
 
