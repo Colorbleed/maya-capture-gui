@@ -194,12 +194,11 @@ def capture_scene(options):
     This ensures playblast is done as quicktime H.264 100% quality.
     It forces showOrnaments to be off and does not render off screen.
 
-    Arguments:
-        high_quality (bool): If true the playblast will be forced to
-            use Viewport 2.0 and enable Anti-aliasing.
+    :param options: a collection of output options
+    :type options: dict
 
-    Returns:
-        str: Full path to playblast file.
+    :returns: Full path to playblast file.
+    :rtype: str 
 
     """
 
@@ -288,6 +287,17 @@ def default_output():
     filename = "{}_{}".format(scene, str_timestamp)
 
     return os.path.join(workspace, folder, filename)
+
+
+def get_project_rule(rule):
+    """Get the full path of the rule of the project"""
+    workspace = cmds.workspace(query=True, rootDirectory=True)
+    folder = cmds.workspace(fileRuleEntry=rule)
+    if not folder:
+        log.warning("File Rule Entry '{}' has no value, please check if the "
+                    "rule name is typed correctly".format(rule))
+
+    return os.path.join(workspace, folder)
 
 
 def list_formats():

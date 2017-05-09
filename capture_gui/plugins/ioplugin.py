@@ -76,32 +76,13 @@ class IoPlugin(plugin.Plugin):
         self.browse = QtWidgets.QPushButton("Browse")
         self.directory_path = QtWidgets.QLineEdit()
         self.directory_path.setPlaceholderText("Select a directory")
+        self.directory_path.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.directory_path.customContextMenuRequested.connect(self.show_token_menu)
         dir_hlayout.addWidget(dir_label)
         dir_hlayout.addWidget(self.directory_path)
         dir_hlayout.addWidget(self.browse)
         self.dir_widget.setLayout(dir_hlayout)
         # endregion Directory
-
-        # region Filename
-        self.filename_widget = QtWidgets.QWidget()
-
-        # line edit
-        self.filename = QtWidgets.QLineEdit()
-        self.filename.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.filename.customContextMenuRequested.connect(self.show_token_menu)
-
-        # widget's layout
-        filename_hlayout = QtWidgets.QHBoxLayout()
-        filename_hlayout.setContentsMargins(0, 0, 0, 0)
-        filename_label = QtWidgets.QLabel("File Name :")
-        filename_label.setFixedWidth(60)
-
-        # assemble filename widget
-        filename_hlayout.addWidget(filename_label)
-        filename_hlayout.addWidget(self.filename)
-        self.filename_widget.setLayout(filename_hlayout)
-        self.filename.setPlaceholderText("playblast")
-        # endregion Filename
 
         # region Recent Playblast
         self.play_recent = QtWidgets.QPushButton("Play recent playblast")
@@ -110,7 +91,6 @@ class IoPlugin(plugin.Plugin):
         # endregion Recent Playblast
 
         self._layout.addLayout(checkbox_hlayout)
-        self._layout.addWidget(self.filename_widget)
         self._layout.addWidget(self.dir_widget)
         self._layout.addWidget(self.play_recent)
 
@@ -132,32 +112,21 @@ class IoPlugin(plugin.Plugin):
         """Toggle if the file name and directory widgets are enabled"""
 
         state = self.use_default.isChecked()
-        self.filename_widget.setVisible(not state)
         self.dir_widget.setVisible(not state)
 
     def get_save_directory(self):
+        """Return file path in which the file will be saved"""
 
         # Maya's browser return Linux based file paths to ensure Windows is
         # supported we use normpath
-        browsed_path = os.path.normpath(lib.browse())
-        filename = browsed_path.split(os.path.sep)[-1]
-        filepath = browsed_path.split(filename)[0]
-
-        self.directory_path.setText(filepath)
-        self.filename.setText(filename)
-
-    def create_call_playblast(self, filepath):
-
-        if not os.path.isfile(filepath):
-            raise RuntimeError("Given path '{}' "
-                               "is not a file".format(filepath))
+        self.directory_path.setText(os.path.normpath(lib.browse()))
 
     def add_playblast(self, item):
         """
         Add an item to the previous playblast menu
         
-        :param items: a collection of file paths of the playblast files
-        :type items: list
+        :param item: a collection of file paths of the playblast files
+        :type item: str
         
         :return: None 
         """
@@ -177,6 +146,7 @@ class IoPlugin(plugin.Plugin):
             self.recent_menu.addAction(action)
 
     def on_playblast_finished(self, options):
+        """Take action after the play blast is done"""
         playblast_file = options['filename']
         if not playblast_file:
             return
@@ -203,9 +173,7 @@ class IoPlugin(plugin.Plugin):
         # run playblast, copy file to given directory
         # get directory from inputs
         if not use_default:
-            directory = self.directory_path.text()
-            filename = self.filename.text() or "playblast"
-            path = os.path.join(directory, filename)
+            path = self.directory_path.text()
         else:
             # get directory from selected folder and given name
             path = lib.default_output()
@@ -215,14 +183,12 @@ class IoPlugin(plugin.Plugin):
         return output
 
     def get_inputs(self, as_preset):
-        inputs = {"directory": self.directory_path.text(),
-                  "name": self.filename.text(),
+        inputs = {"name": self.directory_path.text(),
                   "use_default": self.use_default.isChecked(),
                   "save_file": self.save_file.isChecked(),
                   "open_finished": self.open_viewer.isChecked(),
                   "recent_playblasts": self.recent_playblasts,
-                  "raw_frame_numbers": self.raw_frame_numbers.isChecked()
-                  }
+                  "raw_frame_numbers": self.raw_frame_numbers.isChecked()}
 
         if as_preset:
             inputs["recent_playblasts"] = []
@@ -231,8 +197,7 @@ class IoPlugin(plugin.Plugin):
 
     def apply_inputs(self, settings):
 
-        directory = settings.get("directory", None)
-        filename = settings.get("name", None)
+        directory = settings.get("name", None)
         use_default = settings.get("use_default", True)
         save_file = settings.get("save_file", True)
         open_finished = settings.get("open_finished", True)
@@ -240,7 +205,6 @@ class IoPlugin(plugin.Plugin):
 
         previous_playblasts = settings.get("recent_playblasts", [])
 
-        self.filename.setText(filename)
         self.use_default.setChecked(use_default)
         self.save_file.setChecked(save_file)
         self.open_viewer.setChecked(open_finished)
@@ -254,23 +218,23 @@ class IoPlugin(plugin.Plugin):
     def token_menu(self):
         """
         Build the token menu based on the registered tokens
-        :return: 
+        
+        :returns: Menu
+        :rtype: QtWidgets.QMenu
         """
         menu = QtWidgets.QMenu(self)
         registered_tokens = tokens.list_tokens()
 
         for token, value in registered_tokens.items():
-
             action = QtWidgets.QAction(value['label'], menu)
-
-            fn = partial(self.filename.insert, token)
+            fn = partial(self.directory_path.insert, token)
             action.triggered.connect(fn)
-
             menu.addAction(action)
 
         return menu
 
     def show_token_menu(self, pos):
+        """Show custom manu on position of widget"""
         menu = self.token_menu()
-        globalpos = QtCore.QPoint(self.filename.mapToGlobal(pos))
+        globalpos = QtCore.QPoint(self.directory_path.mapToGlobal(pos))
         menu.exec_(globalpos)

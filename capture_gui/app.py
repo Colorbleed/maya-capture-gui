@@ -379,10 +379,11 @@ class App(QtWidgets.QWidget):
 
         self.playblast_start.emit(options)
 
-        # Format the tokens in the filename
-        options["filename"] = tokens.format_tokens(filename, options)
+        # Format the tokens in the filename and remove double slashes
+        formatted_filepath = tokens.format_tokens(filename, options)
+        options["filename"] = os.path.abspath(formatted_filepath)
 
-        # Perform capture
+        # Perform capture and store returned filename with extension
         options["filename"] = lib.capture_scene(options)
 
         self.playblast_finished.emit(options)
