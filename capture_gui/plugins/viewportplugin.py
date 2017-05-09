@@ -2,36 +2,7 @@ from capture_gui.vendor.Qt import QtCore, QtWidgets
 
 import capture_gui.plugin
 import capture_gui.lib as lib
-
-OBJECT_TYPES = {'Cameras': 'cameras',
-                'Control Vertices': 'controlVertices',
-                'Deformers': 'deformers',
-                'Dimensions': 'dimensions',
-                'Dynamic Constraints': 'dynamicConstraints',
-                'Dynamics': 'dynamics',
-                'Fluids': 'fluids',
-                'Follicles': 'follicles',
-                'Grid': 'grid',
-                'Hair Systems': 'hairSystems',
-                'Handles': 'handles',
-                'Hulls': 'hulls',
-                'Ik Handles': 'ikHandles',
-                'ImagePlane': 'imagePlane',
-                'Joints': 'joints',
-                'Lights': 'lights',
-                'Locators': 'locators',
-                'Manipulators': 'manipulators',
-                'nCloths': 'nCloths',
-                'nParticles': 'nParticles',
-                'nRigids': 'nRigids',
-                'Nurbs Curves': 'nurbsCurves',
-                'Nurbs Surfaces': 'nurbsSurfaces',
-                'Pivots': 'pivots',
-                'Planes': 'planes',
-                'Polymeshes': 'polymeshes',
-                'Strokes': 'strokes',
-                'Subdiv Surfaces': 'subdivSurfaces',
-                'Textures': 'textures'}
+import capture
 
 
 class ViewportPlugin(capture_gui.plugin.Plugin):
@@ -99,7 +70,7 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         menu.addSeparator()
 
         # add standard object shapes
-        for obj_type in OBJECT_TYPES.keys():
+        for obj_type in sorted(lib.OBJECT_TYPES.keys()):
             action = QtWidgets.QAction(menu, text=obj_type)
             action.setCheckable(True)
 
@@ -157,8 +128,8 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         # get all checked objects
         for action in self.show_types_list:
             action_text = action.text()
-            if action_text in OBJECT_TYPES:
-                name = OBJECT_TYPES[action_text]
+            if action_text in lib.OBJECT_TYPES:
+                name = lib.OBJECT_TYPES[action_text]
             elif action_text in self.plugin_shapes:
                 name = self.plugin_shapes[action_text]
             else:
@@ -203,7 +174,9 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
     def get_outputs(self):
         """
         Retrieve all settings of each available sub widgets
-        :return: 
+        
+        :return: collection of output settings for the viewport 
+        :rtype: dict
         """
 
         outputs = dict()
@@ -211,23 +184,22 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         high_quality = self.high_quality.isChecked()
         override_viewport_options = self.override_viewport.isChecked()
 
-        outputs['viewport2_options'] = dict()
-        outputs['viewport_options'] = dict()
-
-        if override_viewport_options and high_quality:
-            # force viewport 2.0 and AA
-            outputs['viewport_options']['rendererName'] = 'vp2Renderer'
-            outputs['viewport2_options']['multiSampleEnable'] = True
-            outputs['viewport2_options']['multiSampleCount'] = 8
-
-        # Viewport visibility settings
         if override_viewport_options:
+            outputs['viewport2_options'] = dict()
+            outputs['viewport_options'] = dict()
+
+            if high_quality:
+                # force viewport 2.0 and AA
+                outputs['viewport_options']['rendererName'] = 'vp2Renderer'
+                outputs['viewport2_options']['multiSampleEnable'] = True
+                outputs['viewport2_options']['multiSampleCount'] = 8
+
             show_per_type = self.get_show_inputs()
             outputs['viewport_options'].update(show_per_type)
         else:
-            # If not override force all to True
-            show_per_type = self.get_show_inputs()
-            show_per_type = {key: True for key in show_per_type}
-            outputs['viewport_options'].update(show_per_type)
+            # Use settings from the active viewport
+            outputs = capture.parse_active_view()
+
+        # TODO: we could filter out the settings we want to use or leave it be
 
         return outputs
