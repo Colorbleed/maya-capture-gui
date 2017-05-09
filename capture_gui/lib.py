@@ -255,21 +255,6 @@ def capture_scene(options):
     return path
 
 
-def get_background_colors():
-    """
-    Get the colors of the background to pass to the 
-    :return: collection of color values {type: [value, value, value]}
-    :rtype: dict
-    """
-
-    return {'background': cmds.displayRGBColor('background',
-                                               query=True),
-            'backgroundTop': cmds.displayRGBColor('backgroundTop',
-                                                  query=True),
-            'backgroundBottom': cmds.displayRGBColor('backgroundBottom',
-                                                     query=True)}
-
-
 def browse(path=None):
     """Open a pop-up browser for the user"""
 

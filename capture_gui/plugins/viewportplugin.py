@@ -187,7 +187,6 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         if override_viewport_options:
             outputs['viewport2_options'] = dict()
             outputs['viewport_options'] = dict()
-            outputs['display_options'] = lib.get_background_colors()
 
             if high_quality:
                 # force viewport 2.0 and AA
