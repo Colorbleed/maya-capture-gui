@@ -1,8 +1,12 @@
+import logging
+
 from capture_gui.vendor.Qt import QtCore, QtWidgets
 
 import capture_gui.plugin
 import capture_gui.lib as lib
 import capture
+
+log = logging.getLogger("Viewport Plugin")
 
 
 class ViewportPlugin(capture_gui.plugin.Plugin):
@@ -155,11 +159,23 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
     def apply_inputs(self, inputs):
         """
         Apply the settings which can be adjust by the user or presets
+        
         :param inputs: a collection of settings
         :type inputs: dict
 
         :return: None
         """
+
+        # complete list of display shapes with plugin shapes
+        # copy list to ensure it won't be altered
+        shapelist = lib.OBJECT_TYPES.copy()
+        for label, name in self.plugin_shapes.items():
+            # update shape name to ensure future changed of plugin shape names
+            if label in shapelist:
+                shapelist[label].update(name)
+            else:
+                shapelist[label] = name
+
         # get input values directly from input given
         override_viewport = inputs.get("override_viewport_options", True)
         high_quality = inputs.get("high_quality", True)
@@ -169,7 +185,16 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         self.show_types_button.setEnabled(override_viewport)
 
         for action in self.show_types_list:
-            action.setChecked(inputs.get(action.text(), True))
+            label = action.text()
+            enabled = label in shapelist
+            # Give warning to user and disable action when it is
+            # not available
+            action.setEnabled(enabled)
+            if not enabled:
+                log.warning("List of displayable shapes "
+                            "does not contain '{}'".format(label))
+                continue
+            action.setChecked(inputs.get(shapelist[label], True))
 
     def get_outputs(self):
         """

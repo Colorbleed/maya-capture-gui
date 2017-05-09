@@ -151,7 +151,10 @@ def get_current_renderlayer():
 def get_plugin_shapes():
     """
     Get all currently available plugin shapes
-    :return: dictionary
+    
+    :return: a collection of plugin shapes with their menu name and 
+    program name
+    :rtype: dict
     """
     filters = cmds.pluginDisplayFilter(query=True, listFilters=True)
     labels = [cmds.pluginDisplayFilter(f, query=True, label=True) for f in
