@@ -275,10 +275,13 @@ def browse(path=None):
 
 
 def default_output():
-    """Generate outpath based on current scenename and set project"""
+    """Return filename based on current scene name.
+    
+    :returns: A relative filename
+    :rtype: str
+    
+    """
 
-    workspace = cmds.workspace(query=True, rootDirectory=True)
-    folder = cmds.workspace(fileRuleEntry="images")
     scene = get_current_scenename() or "playblast"
 
     # get current datetime
@@ -286,7 +289,7 @@ def default_output():
     str_timestamp = timestamp.strftime("%Y-%m-%d_%H-%M-%S")
     filename = "{}_{}".format(scene, str_timestamp)
 
-    return os.path.join(workspace, folder, filename)
+    return filename
 
 
 def get_project_rule(rule):
