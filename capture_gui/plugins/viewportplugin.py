@@ -10,7 +10,9 @@ log = logging.getLogger("Viewport Plugin")
 
 
 class ViewportPlugin(capture_gui.plugin.Plugin):
+
     """Plugin to apply viewport visibilities and settings"""
+
     id = "Viewport Options"
     label = "Viewport Options"
     section = "config"
@@ -19,8 +21,8 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
     def __init__(self, parent=None):
         super(ViewportPlugin, self).__init__(parent=parent)
 
-        self.show_types_list = list()
-        self.plugin_shapes = lib.get_plugin_shapes()
+        self.show_type_actions = list()
+        self.show_types = lib.get_show_object_types()
 
         self.setObjectName(self.label)
 
@@ -73,26 +75,12 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         menu.addAction(toggle_none)
         menu.addSeparator()
 
-        # add standard object shapes
-        for obj_type in sorted(lib.OBJECT_TYPES.keys()):
-            action = QtWidgets.QAction(menu, text=obj_type)
-            action.setCheckable(True)
-
-            # Add to menu and list of instances
-            menu.addAction(action)
-            self.show_types_list.append(action)
-
-        menu.addSeparator()
-
         # add plugin shapes if any
-        plugin_shapes = self.plugin_shapes.keys()
-        if plugin_shapes:
-            for plugin_shape in plugin_shapes:
-                action = QtWidgets.QAction(menu, text=plugin_shape)
-                action.setCheckable(True)
-
-                menu.addAction(action)
-                self.show_types_list.append(action)
+        for shape in self.show_types:
+            action = QtWidgets.QAction(menu, text=shape)
+            action.setCheckable(True)
+            menu.addAction(action)
+            self.show_type_actions.append(action)
 
         # connect signals
         toggle_all.triggered.connect(self.toggle_all_visbile)
@@ -107,38 +95,30 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         self.high_quality.setEnabled(state)
 
     def toggle_all_visbile(self):
-        """
-        Set all object types off or on depending on the state
-        :return: None
-        """
-        for objecttype in self.show_types_list:
-            objecttype.setChecked(True)
+        """Set all object types off or on depending on the state"""
+        for action in self.show_type_actions:
+            action.setChecked(True)
 
     def toggle_all_hide(self):
-        """
-        Set all object types off or on depending on the state
-        :return: None
-        """
-        for objecttype in self.show_types_list:
-            objecttype.setChecked(False)
+        """Set all object types off or on depending on the state"""
+        for action in self.show_type_actions:
+            action.setChecked(False)
 
     def get_show_inputs(self):
         """
         Return checked state of show menu items
-        :return: 
+        
+        :return: collection of which shape is checked
+        :rtype: dict
         """
 
         show_inputs = {}
         # get all checked objects
-        for action in self.show_types_list:
-            action_text = action.text()
-            if action_text in lib.OBJECT_TYPES:
-                name = lib.OBJECT_TYPES[action_text]
-            elif action_text in self.plugin_shapes:
-                name = self.plugin_shapes[action_text]
-            else:
+        for action in self.show_type_actions:
+            label = action.text()
+            name = self.show_types.get(label, None)
+            if name is None:
                 continue
-
             show_inputs[name] = action.isChecked()
 
         return show_inputs
@@ -146,8 +126,13 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
     def get_inputs(self, as_preset):
         """
         Return the widget options
-        :param as_preset: 
-        :return: dictionary with all the settings of the widgets 
+        
+        :param as_preset: Optional, set to True to retrieve it as a preset 
+        input
+        :type as_preset: bool
+        
+        :return: collection with all the settings of the widgets
+        :rtype: dict
         """
         inputs = {"high_quality": self.high_quality.isChecked(),
                   "override_viewport_options": self.override_viewport.isChecked()}
@@ -166,16 +151,6 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         :return: None
         """
 
-        # complete list of display shapes with plugin shapes
-        # copy list to ensure it won't be altered
-        shapelist = lib.OBJECT_TYPES.copy()
-        for label, name in self.plugin_shapes.items():
-            # update shape name to ensure future changed of plugin shape names
-            if label in shapelist:
-                shapelist[label].update(name)
-            else:
-                shapelist[label] = name
-
         # get input values directly from input given
         override_viewport = inputs.get("override_viewport_options", True)
         high_quality = inputs.get("high_quality", True)
@@ -184,17 +159,11 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         self.override_viewport.setChecked(override_viewport)
         self.show_types_button.setEnabled(override_viewport)
 
-        for action in self.show_types_list:
+        for action in self.show_type_actions:
             label = action.text()
-            enabled = label in shapelist
-            # Give warning to user and disable action when it is
-            # not available
-            action.setEnabled(enabled)
-            if not enabled:
-                log.warning("List of displayable shapes "
-                            "does not contain '{}'".format(label))
-                continue
-            action.setChecked(inputs.get(shapelist[label], True))
+            system_name = self.show_types[label]
+            state = inputs.get(system_name, True)
+            action.setChecked(state)
 
     def get_outputs(self):
         """

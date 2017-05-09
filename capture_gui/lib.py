@@ -5,6 +5,7 @@ import os
 import glob
 import subprocess
 import contextlib
+from collections import OrderedDict
 
 import datetime
 import maya.cmds as cmds
@@ -15,36 +16,59 @@ from .vendor.Qt import QtWidgets
 
 log = logging.getLogger(__name__)
 
+# region Object types
+OBJECT_TYPES = OrderedDict()
+OBJECT_TYPES['NURBS Curves'] = 'nurbsCurves'
+OBJECT_TYPES['NURBS Surfaces'] = 'nurbsSurfaces'
+OBJECT_TYPES['NURBS CVs'] = 'controlVertices'
+OBJECT_TYPES['NURBS Hulls'] = 'hulls'
+OBJECT_TYPES['Polygons'] = 'polymeshes'
+OBJECT_TYPES['Subdiv Surfaces'] = 'subdivSurfaces'
+OBJECT_TYPES['Planes'] = 'planes'
+OBJECT_TYPES['Lights'] = 'lights'
+OBJECT_TYPES['Cameras'] = 'cameras'
+OBJECT_TYPES['Image Planes'] = 'imagePlane'
+OBJECT_TYPES['Joints'] = 'joints'
+OBJECT_TYPES['IK Handles'] = 'ikHandles'
+OBJECT_TYPES['Deformers'] = 'deformers'
+OBJECT_TYPES['Dynamics'] = 'dynamics'
+OBJECT_TYPES['Particle Instancers'] = ''
+OBJECT_TYPES['Fluids'] = 'fluids'
+OBJECT_TYPES['Hair Systems'] = 'hairSystems'
+OBJECT_TYPES['Follicles'] = 'follicles'
+OBJECT_TYPES['nCloths'] = 'nCloths'
+OBJECT_TYPES['nParticles'] = 'nParticles'
+OBJECT_TYPES['nRigids'] = 'nRigids'
+OBJECT_TYPES['Dynamic Constraints'] = 'dynamicConstraints'
+OBJECT_TYPES['Locators'] = 'locators'
+OBJECT_TYPES['Dimensions'] = 'dimensions'
+OBJECT_TYPES['Pivots'] = 'pivots'
+OBJECT_TYPES['Handles'] = 'handles'
+OBJECT_TYPES['Textures Placements'] = 'textures'
+OBJECT_TYPES['Strokes'] = 'strokes'
+OBJECT_TYPES['Motion Trails'] = 'motionTrails'
+OBJECT_TYPES['Plugin SHapes'] = 'pluginShapes'
+OBJECT_TYPES['Clip Ghosts'] = 'clipGhosts'
+OBJECT_TYPES['Grease Pencil'] = 'greasePencil'
+OBJECT_TYPES['Manipulators'] = 'manipulators'
+OBJECT_TYPES['Grid'] = 'grid'
+OBJECT_TYPES['HUD'] = 'hud'
+# endregion Object types
 
-OBJECT_TYPES = {'Cameras': 'cameras',
-                'Control Vertices': 'controlVertices',
-                'Deformers': 'deformers',
-                'Dimensions': 'dimensions',
-                'Dynamic Constraints': 'dynamicConstraints',
-                'Dynamics': 'dynamics',
-                'Fluids': 'fluids',
-                'Follicles': 'follicles',
-                'Grid': 'grid',
-                'Hair Systems': 'hairSystems',
-                'Handles': 'handles',
-                'Hulls': 'hulls',
-                'Ik Handles': 'ikHandles',
-                'ImagePlane': 'imagePlane',
-                'Joints': 'joints',
-                'Lights': 'lights',
-                'Locators': 'locators',
-                'Manipulators': 'manipulators',
-                'nCloths': 'nCloths',
-                'nParticles': 'nParticles',
-                'nRigids': 'nRigids',
-                'NURBS Curves': 'nurbsCurves',
-                'NURBS Surfaces': 'nurbsSurfaces',
-                'Pivots': 'pivots',
-                'Planes': 'planes',
-                'Polygons': 'polymeshes',
-                'Strokes': 'strokes',
-                'Subdiv Surfaces': 'subdivSurfaces',
-                'Textures': 'textures'}
+
+def get_show_object_types():
+
+    results = OrderedDict()
+
+    # Add the plug-in shapes
+    plugin_shapes = get_plugin_shapes()
+    results.update(plugin_shapes)
+
+    # We add default shapes last so plug-in shapes could
+    # never potentially overwrite any built-ins.
+    results.update(OBJECT_TYPES)
+
+    return results
 
 
 def get_current_scenename():
@@ -159,7 +183,7 @@ def get_plugin_shapes():
     filters = cmds.pluginDisplayFilter(query=True, listFilters=True)
     labels = [cmds.pluginDisplayFilter(f, query=True, label=True) for f in
               filters]
-    return dict(zip(labels, filters))
+    return OrderedDict(zip(labels, filters))
 
 
 def open_file(filepath):
@@ -315,7 +339,6 @@ def default_output():
     
     :returns: A relative filename
     :rtype: str
-    
     """
 
     scene = get_current_scenename() or "playblast"
@@ -330,6 +353,7 @@ def default_output():
 
 def get_project_rule(rule):
     """Get the full path of the rule of the project"""
+
     workspace = cmds.workspace(query=True, rootDirectory=True)
     folder = cmds.workspace(fileRuleEntry=rule)
     if not folder:
