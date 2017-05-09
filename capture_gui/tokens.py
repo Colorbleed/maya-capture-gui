@@ -55,7 +55,7 @@ register_token("<RenderLayer>", lambda options: lib.get_current_renderlayer(),
                label="Insert active render layer name")
 
 # project based tokens
-register_token("<Imager>",
+register_token("<Images>",
                lambda options: lib.get_project_rule("images"),
                label="Insert image directory of set project")
 register_token("<Movies>",
