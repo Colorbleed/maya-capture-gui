@@ -1,3 +1,5 @@
+# TODO: find a solution for fetching Maya main window without shiboken and crashes
+
 import sys
 import logging
 import json
@@ -10,9 +12,16 @@ from collections import OrderedDict
 import datetime
 import maya.cmds as cmds
 import maya.mel as mel
+import maya.OpenMayaUI as omui
 import capture
 
 from .vendor.Qt import QtWidgets
+try:
+    # PySide1
+    import shiboken
+except ImportError:
+    # PySide2
+    import shiboken2 as shiboken
 
 log = logging.getLogger(__name__)
 
@@ -388,7 +397,10 @@ def no_undo():
 
 
 def get_maya_main_window():
-    """Return Maya's main window"""
-    for obj in QtWidgets.QApplication.topLevelWidgets():
-        if obj.objectName() == 'MayaWindow':
-            return obj
+    """
+    Get the main Maya window as a QtGui.QMainWindow instance
+    :return: QtGui.QMainWindow instance of the top level Maya windows
+    """
+    ptr = omui.MQtUtil.mainWindow()
+    if ptr is not None:
+        return shiboken.wrapInstance(long(ptr), QtWidgets.QWidget)
