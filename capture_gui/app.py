@@ -96,9 +96,9 @@ class PreviewWidget(QtWidgets.QWidget):
             for k, v in options.items():
                 if isinstance(v, dict):
                     for vk, vv in v.items():
-                        print "\t{} : {}".format(vk, vv)
+                        print "{}\t{} : {}".format(k, vk, vv)
                     continue
-                print "\t{} : {}".format(k, v)
+                print "{} : {}".format(k, v)
 
             fname = capture.capture(**options)
             if not fname:
