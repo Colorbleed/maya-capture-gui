@@ -93,6 +93,13 @@ class PreviewWidget(QtWidgets.QWidget):
             options['compression'] = "jpg"
             options['sound'] = None
 
+            for k, v in options.items():
+                if isinstance(v, dict):
+                    for vk, vv in v.items():
+                        print "\t{} : {}".format(vk, vv)
+                    continue
+                print "\t{} : {}".format(k, v)
+
             fname = capture.capture(**options)
             if not fname:
                 log.warning("Preview failed")
