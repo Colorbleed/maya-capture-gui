@@ -425,6 +425,7 @@ class App(QtWidgets.QWidget):
 
     def _build_configuration_dialog(self):
         """Build a configuration to store configuration widgets in"""
+
         dialog = QtWidgets.QDialog(self)
         dialog.setWindowTitle("Capture - Preset Configuration")
 
@@ -474,7 +475,8 @@ class App(QtWidgets.QWidget):
     def validate(self):
         """
         Check if the outputs of the widgets are good
-        :return: 
+        :return: True or False
+        :rtype: bool
         """
 
         errors = list()
@@ -522,6 +524,7 @@ class App(QtWidgets.QWidget):
 
     def on_widget_settings_changed(self):
         """Set current preset to '*' on settings change"""
+
         self.options_changed.emit(self.get_outputs)
         self.presetwidget.presets.setCurrentIndex(0)
 
@@ -530,7 +533,7 @@ class App(QtWidgets.QWidget):
         
         :return: filepath of the configuration file
         :rtype: unicode
-        
+
         """
 
         userdir = os.path.expanduser("~")
@@ -577,7 +580,6 @@ class App(QtWidgets.QWidget):
         
         :return: The plug-in widgets in *all* sections
         :rtype: list
-        
         """
 
         widgets = list()
@@ -607,9 +609,8 @@ class App(QtWidgets.QWidget):
     def get_inputs(self, as_preset=False):
         """Return the inputs per plug-in widgets by `plugin.id`.
         
-        Returns:
-            dict: The inputs per widget
-        
+        :returns: The inputs per widget
+        :rtype: dict        
         """
 
         inputs = dict()
