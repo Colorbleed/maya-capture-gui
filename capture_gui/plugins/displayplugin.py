@@ -48,8 +48,8 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
 
         self.override = QtWidgets.QCheckBox("Override Display Options")
 
-        self.background_type = QtWidgets.QComboBox()
-        self.background_type.addItems(["Solid", "Gradient"])
+        self.display_type = QtWidgets.QComboBox()
+        self.display_type.addItems(["Solid", "Gradient"])
 
         # create color columns
         self._color_layout = QtWidgets.QHBoxLayout()
@@ -58,7 +58,7 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
 
         # populate layout
         self._layout.addWidget(self.override)
-        self._layout.addWidget(self.background_type)
+        self._layout.addWidget(self.display_type)
         self._layout.addLayout(self._color_layout)
 
         self.connections()
@@ -103,9 +103,15 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
 
     def toggle_override(self):
         state = self.override.isChecked()
-        self.background_type.setEnabled(state)
+        self.display_type.setEnabled(state)
         for widget in self._colors.values():
             widget.setEnabled(state)
+
+    def display_gradient(self):
+        display_type = self.display_type.currentText()
+        state = display_type == "Gradient"
+
+        return state
 
     def apply_inputs(self, settings):
         """Apply the saved inputs from the inputs configuration
@@ -132,14 +138,14 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
         return inputs
 
     def get_outputs(self):
-        outputs = {"display_options": {}}
+        outputs = {}
         if self.override.isChecked():
+            outputs["displayGradient"] = self.display_gradient()
             for label, widget in self._colors.items():
-                outputs["display_options"][label] = widget.color
+                outputs[label] = widget.color
         else:
             for key in COLORS.keys():
                 color = cmds.displayRGBColor(key, query=True)
-                outputs["display_options"][key] = color
+                outputs[key] = color
 
-        return outputs
-
+        return {"display_options": outputs}
