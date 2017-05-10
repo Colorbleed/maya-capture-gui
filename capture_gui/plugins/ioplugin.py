@@ -129,7 +129,7 @@ class IoPlugin(plugin.Plugin):
         # Ensure the playblast list is never longer than maximum amount
         # by removing the older entries that are at the end of the list
         if len(self.recent_playblasts) > self.max_recent_playblasts:
-            self.recent_playblasts[:] = self.recent_playblasts[:self.max_recent_playblasts]
+            del self.recent_playblasts[self.max_recent_playblasts:]
 
         # Rebuild the actions menu
         self.recent_menu.clear()
