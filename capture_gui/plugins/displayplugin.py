@@ -1,3 +1,5 @@
+import maya.cmds as cmds
+
 from capture_gui.vendor.Qt import QtCore, QtWidgets
 import capture_gui.plugin
 import capture_gui.colorpicker as colorpicker
@@ -130,4 +132,14 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
         return inputs
 
     def get_outputs(self):
-        return {"display_options": self.get_inputs(False)}
+        outputs = {"display_options": {}}
+        if self.override.isChecked():
+            for label, widget in self._colors.items():
+                outputs["display_options"][label] = widget.color
+        else:
+            for key in COLORS.keys():
+                color = cmds.displayRGBColor(key, query=True)
+                outputs["display_options"][key] = color
+
+        return outputs
+

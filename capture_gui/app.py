@@ -78,12 +78,6 @@ class PreviewWidget(QtWidgets.QWidget):
 
         with lib.no_undo():
             options = self.options_getter()
-            for k, v in options.items():
-                if isinstance(v, dict):
-                    for v_k, v_v in v.items():
-                        print "{}\t{} : {}".format(k, v_k, v_v)
-                print "{} : {}".format(k, v)
-
             tempdir = tempfile.mkdtemp()
 
             # override settings that are constants for the preview
