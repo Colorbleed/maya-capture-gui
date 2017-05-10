@@ -43,6 +43,7 @@ class IoPlugin(plugin.Plugin):
     label = "Save"
     section = "app"
     order = 40
+    max_recent_playblasts = 5
 
     def __init__(self, parent=None):
         super(IoPlugin, self).__init__(parent=parent)
@@ -119,8 +120,8 @@ class IoPlugin(plugin.Plugin):
             log.info("Item already in list")
             return
 
-        if len(self.recent_playblasts) == 5:
-            self.recent_playblasts.pop(4)
+        if len(self.recent_playblasts) == self.max_recent_playblasts:
+            self.recent_playblasts.pop(self.max_recent_playblasts - 1)
 
         self.recent_playblasts.insert(0, item)
 
