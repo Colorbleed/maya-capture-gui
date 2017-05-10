@@ -1,12 +1,8 @@
-import logging
-
 from capture_gui.vendor.Qt import QtCore, QtWidgets
 
 import capture_gui.plugin
 import capture_gui.lib as lib
 import capture
-
-log = logging.getLogger("Viewport Plugin")
 
 
 class ViewportPlugin(capture_gui.plugin.Plugin):
