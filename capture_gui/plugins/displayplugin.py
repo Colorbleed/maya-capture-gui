@@ -39,17 +39,39 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
     def __init__(self, parent=None):
         super(DisplayPlugin, self).__init__(parent=parent)
 
-        # The color widgets per key
         self._colors = dict()
 
-        self._layout = QtWidgets.QHBoxLayout()
+        self._layout = QtWidgets.QVBoxLayout()
         self.setLayout(self._layout)
 
-        for label, default in COLORS.items():
-            self.add_color_picker(label, default)
+        self.override = QtWidgets.QCheckBox("Override Display Options")
 
-    def add_color_picker(self, label, default):
+        self.background_type = QtWidgets.QComboBox()
+        self.background_type.addItems(["Solid", "Gradient"])
+
+        # create color columns
+        self._color_layout = QtWidgets.QHBoxLayout()
+        for label, default in COLORS.items():
+            self.add_color_picker(self._color_layout, label, default)
+
+        # populate layout
+        self._layout.addWidget(self.override)
+        self._layout.addWidget(self.background_type)
+        self._layout.addLayout(self._color_layout)
+
+        self.connections()
+
+        # ensure widgets are in the correct enable state
+        self.toggle_override()
+
+    def connections(self):
+        self.override.toggled.connect(self.toggle_override)
+
+    def add_color_picker(self, layout, label, default):
         """Create a column with a label and a button to select a color
+        
+        :param layout: the layout to add the color picket too
+        :type layout: QtWidgets.QLayout
         
         :param label: the system name for the color type, e.g. : backgroundTop
         :type label: str
@@ -72,14 +94,20 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
 
         column.setAlignment(label_widget, QtCore.Qt.AlignCenter)
 
-        self._layout.addLayout(column)
+        layout.addLayout(column)
         self._colors[label] = color_picker
 
         return color_picker
 
+    def toggle_override(self):
+        state = self.override.isChecked()
+        self.background_type.setEnabled(state)
+        for widget in self._colors.values():
+            widget.setEnabled(state)
+
     def apply_inputs(self, settings):
-        """
-        Apply the saved inputs from the inputs configuration
+        """Apply the saved inputs from the inputs configuration
+        
         :param settings: collection of input settings
         :type settings: dict
         
@@ -91,8 +119,15 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
             value = settings.get(label, default)
             widget.color = value
 
+        override = settings.get("override_display", False)
+        self.override.setChecked(override)
+
     def get_inputs(self, as_preset):
-        return {label: widget.color for label, widget in self._colors.items()}
+        inputs = {"override_display": self.override.isChecked()}
+        for label, widget in self._colors.items():
+            inputs[label] = widget.color
+
+        return inputs
 
     def get_outputs(self):
-        return self.get_inputs(False)
+        return {"display_options": self.get_inputs(False)}

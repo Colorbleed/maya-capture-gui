@@ -1,4 +1,4 @@
-from capture_gui.vendor.Qt import QtCore, QtWidgets
+from capture_gui.vendor.Qt import QtCore, QtWidgets, QtGui
 
 
 class ColorPicker(QtWidgets.QPushButton):
@@ -10,7 +10,7 @@ class ColorPicker(QtWidgets.QPushButton):
         self.clicked.connect(self.get_color_value)
         self._color = None
 
-        self.color = [255, 255, 255]
+        self.color = [1, 1, 1]
 
     # region properties
     @property
@@ -27,6 +27,8 @@ class ColorPicker(QtWidgets.QPushButton):
         :return: None
         """
         self._color = values
+
+        values = [int(x*255) for x in values]
         self.setStyleSheet("background: rgb({},{},{})".format(*values))
 
     # endregion properties
@@ -37,7 +39,9 @@ class ColorPicker(QtWidgets.QPushButton):
         :return: the red, green and blue values
         :rtype: list
         """
-        colors = QtWidgets.QColorDialog.getColor()
+        current = QtGui.QColor()
+        current.setRgbF(*self._color)
+        colors = QtWidgets.QColorDialog.getColor(current)
         if not colors:
             return
-        self.color = [colors.red(), colors.green(), colors.blue()]
+        self.color = [colors.redF(), colors.greenF(), colors.blueF()]
