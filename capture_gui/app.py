@@ -83,6 +83,7 @@ class PreviewWidget(QtWidgets.QWidget):
 
             # override settings that are constants for the preview
             options = options.copy()
+            options['filename'] = None
             options['complete_filename'] = os.path.join(tempdir, "temp.jpg")
             options['width'] = self.preview_width
             options['height'] = self.preview_height
@@ -92,13 +93,6 @@ class PreviewWidget(QtWidgets.QWidget):
             options['format'] = "image"
             options['compression'] = "jpg"
             options['sound'] = None
-
-            for k, v in options.items():
-                if isinstance(v, dict):
-                    for vk, vv in v.items():
-                        print "{}\t{} : {}".format(k, vk, vv)
-                    continue
-                print "{} : {}".format(k, v)
 
             fname = capture.capture(**options)
             if not fname:

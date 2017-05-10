@@ -43,6 +43,7 @@ class IoPlugin(plugin.Plugin):
     label = "Save"
     section = "app"
     order = 40
+    max_recent_playblasts = 5
 
     def __init__(self, parent=None):
         super(IoPlugin, self).__init__(parent=parent)
@@ -109,21 +110,28 @@ class IoPlugin(plugin.Plugin):
         """
         Add an item to the previous playblast menu
         
-        :param item: a collection of file paths of the playblast files
+        :param item: full path to a playblast file
         :type item: str
         
         :return: None 
         """
 
-        if item in self.recent_playblasts:
-            log.info("Item already in list")
-            return
+        # If item already in the recent playblasts remove it so we are
+        # sure to add it as the new first most-recent
+        try:
+            self.recent_playblasts.remove(item)
+        except ValueError:
+            pass
 
-        if len(self.recent_playblasts) == 5:
-            self.recent_playblasts.pop(4)
-
+        # Add as first in the recent playblasts
         self.recent_playblasts.insert(0, item)
 
+        # Ensure the playblast list is never longer than maximum amount
+        # by removing the older entries that are at the end of the list
+        if len(self.recent_playblasts) > self.max_recent_playblasts:
+            del self.recent_playblasts[self.max_recent_playblasts:]
+
+        # Rebuild the actions menu
         self.recent_menu.clear()
         for playblast in self.recent_playblasts:
             action = IoAction(parent=self, filepath=playblast)
