@@ -1,3 +1,5 @@
+from . import app
+from . import lib
 
 
 def main(show=True):
@@ -12,15 +14,11 @@ def main(show=True):
         capture_gui.app.App: The pyblish gui application instance.
 
     """
-    from . import app
-    from . import lib
-
     # get main maya window to parent widget to
     parent = lib.get_maya_main_window()
 
     # launch app
-    window = app.App(title="Capture GUI",
-                     parent=parent)
+    window = app.App(title="Capture GUI", parent=parent)
 
     if show:
         window.show()
