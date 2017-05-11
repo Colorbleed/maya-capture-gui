@@ -9,6 +9,7 @@ __Additions__
 
 __Changes__
 - toggle_override is renamed to on_toggle_override
+- get_color_value is renamed to show_color_dialog
 
 
 ## 04 / 05 / 2017 - v1.3.1

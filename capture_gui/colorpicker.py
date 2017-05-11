@@ -7,7 +7,7 @@ class ColorPicker(QtWidgets.QPushButton):
     def __init__(self):
         QtWidgets.QPushButton.__init__(self)
 
-        self.clicked.connect(self.get_color_value)
+        self.clicked.connect(self.show_color_dialog)
         self._color = None
 
         self.color = [1, 1, 1]
@@ -33,8 +33,10 @@ class ColorPicker(QtWidgets.QPushButton):
 
     # endregion properties
 
-    def get_color_value(self):
-        """Get the RGB values from the selected color
+    def show_color_dialog(self):
+        """
+        Display a color picker and after a color has been chosen update
+        the color of the button and its current value 
         
         :return: the red, green and blue values
         :rtype: list
