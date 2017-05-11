@@ -7,8 +7,6 @@ __Additions__
 
 __Changes__
 - Removed redundant attributes
-
-__Changes__
 - Restructured UI for Viewport Plugin
 
 ## 10 / 05 / 2017 - v1.4.0
