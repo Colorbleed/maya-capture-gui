@@ -31,9 +31,8 @@ def parse_frames(string):
     """
 
     result = list()
-
-    if not string:
-        return result
+    if not string.strip():
+        raise ValueError("Can't parse an empty frame string.")
 
     if not re.match("^[-0-9,; ]*$", string):
         raise ValueError("Invalid symbols in frame string: {}".format(string))
@@ -43,8 +42,6 @@ def parse_frames(string):
         # Skip empty elements
         value = raw.strip().replace(" ", "")
         if not value:
-            if raw:
-                raise ValueError("Empty frame entry: '{0}'".format(raw))
             continue
 
         # Check for sequences (1-20) including negatives (-10--8)
@@ -65,6 +62,10 @@ def parse_frames(string):
                                  "'{0}'".format(value))
 
             result.append(frame)
+
+    if not result:
+        # This happens when only spaces are entered with a separator like `,` or `;`
+        raise ValueError("Unable to parse any frames from string: {}".format(string))
 
     return result
 
@@ -107,7 +108,7 @@ class TimePlugin(capture_gui.plugin.Plugin):
         # unique frames field
         self.custom_frames = QtWidgets.QLineEdit()
         self.custom_frames.setFixedHeight(frame_input_height)
-        self.custom_frames.setPlaceholderText("1-20,25;50;75,100-150")
+        self.custom_frames.setPlaceholderText("Example: 1-20,25;50;75,100-150")
         self.custom_frames.setVisible(False)
 
         self._layout.addWidget(self.mode)
@@ -119,13 +120,13 @@ class TimePlugin(capture_gui.plugin.Plugin):
         # and the end is never lower than start
         self.end.valueChanged.connect(self._ensure_start)
         self.start.valueChanged.connect(self._ensure_end)
-        self.custom_frames.textChanged.connect(self.validate)
 
         self.on_mode_changed()  # force enabled state refresh
 
         self.mode.currentIndexChanged.connect(self.on_mode_changed)
         self.start.valueChanged.connect(self.on_mode_changed)
         self.end.valueChanged.connect(self.on_mode_changed)
+        self.custom_frames.textChanged.connect(self.on_mode_changed)
 
     def _ensure_start(self, value):
         self.start.setValue(min(self.start.value(), value))
@@ -159,12 +160,15 @@ class TimePlugin(capture_gui.plugin.Plugin):
             self.end.setVisible(True)
             self.custom_frames.setVisible(False)
             mode_values = self.start.value(), self.end.value()
-
         elif mode == self.CustomFrames:
             self.start.setVisible(False)
             self.end.setVisible(False)
             self.custom_frames.setVisible(True)
-            mode_values = self.custom_frames.text()
+            mode_values = "({})".format(self.custom_frames.text())
+
+            # ensure validation state for custom frames
+            self.validate()
+
         else:
             self.start.setEnabled(False)
             self.end.setEnabled(False)
@@ -252,7 +256,7 @@ class TimePlugin(capture_gui.plugin.Plugin):
         self.mode.setCurrentIndex(mode)
         self.start.setValue(int(startframe))
         self.end.setValue(int(endframe))
-        if custom_frames:
+        if custom_frames is not None:
             self.custom_frames.setText(custom_frames)
 
     def initialize(self):
