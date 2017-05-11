@@ -49,7 +49,7 @@ def list_tokens():
 register_token("<Camera>",
                lambda options: options['camera'].rsplit("|", 1)[-1],
                label="Insert camera name")
-register_token("<Scene>", lambda options: lib.get_current_scenename(),
+register_token("<Scene>", lambda options: lib.get_current_scenename() or "playblast",
                label="Insert current scene name")
 register_token("<RenderLayer>", lambda options: lib.get_current_renderlayer(),
                label="Insert active render layer name")
