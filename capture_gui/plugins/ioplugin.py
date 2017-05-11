@@ -67,8 +67,8 @@ class IoPlugin(plugin.Plugin):
         checkbox_hlayout.addStretch(True)
         # endregion Checkboxes
 
-        # region Directory
-        self.dir_widget = QtWidgets.QWidget()
+        # region Path
+        self.path_widget = QtWidgets.QWidget()
 
         self.browse = QtWidgets.QPushButton("Browse")
         self.file_path = QtWidgets.QLineEdit()
@@ -79,16 +79,16 @@ class IoPlugin(plugin.Plugin):
         self.file_path.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.file_path.customContextMenuRequested.connect(self.show_token_menu)
 
-        dir_hlayout = QtWidgets.QHBoxLayout()
-        dir_hlayout.setContentsMargins(0, 0, 0, 0)
-        dir_label = QtWidgets.QLabel("Directory :")
-        dir_label.setFixedWidth(60)
+        path_hlayout = QtWidgets.QHBoxLayout()
+        path_hlayout.setContentsMargins(0, 0, 0, 0)
+        path_label = QtWidgets.QLabel("Path:")
+        path_label.setFixedWidth(30)
 
-        dir_hlayout.addWidget(dir_label)
-        dir_hlayout.addWidget(self.file_path)
-        dir_hlayout.addWidget(self.browse)
-        self.dir_widget.setLayout(dir_hlayout)
-        # endregion Directory
+        path_hlayout.addWidget(path_label)
+        path_hlayout.addWidget(self.file_path)
+        path_hlayout.addWidget(self.browse)
+        self.path_widget.setLayout(path_hlayout)
+        # endregion Path
 
         # region Recent Playblast
         self.play_recent = QtWidgets.QPushButton("Play recent playblast")
@@ -97,21 +97,26 @@ class IoPlugin(plugin.Plugin):
         # endregion Recent Playblast
 
         self._layout.addLayout(checkbox_hlayout)
-        self._layout.addWidget(self.dir_widget)
+        self._layout.addWidget(self.path_widget)
         self._layout.addWidget(self.play_recent)
 
-        self.browse.clicked.connect(self.get_save_directory)
+        self.browse.clicked.connect(self.show_browse_dialog)
 
-    def get_save_directory(self):
-        """Return file path in which the file will be saved"""
+    def show_browse_dialog(self):
+        """Set the filepath using a browser dialog.
+        
+        :return: None
+        """
 
-        # Maya's browser return Linux based file paths to ensure Windows is
-        # supported we use normpath
         path = lib.browse()
         if not path:
             return
 
-        self.file_path.setText(os.path.normpath(path))
+        # Maya's browser return Linux based file paths to ensure Windows is
+        # supported we use normpath
+        path = os.path.normpath(path)
+
+        self.file_path.setText(path)
 
     def add_playblast(self, item):
         """
