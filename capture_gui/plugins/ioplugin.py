@@ -72,7 +72,10 @@ class IoPlugin(plugin.Plugin):
 
         self.browse = QtWidgets.QPushButton("Browse")
         self.file_path = QtWidgets.QLineEdit()
-        self.file_path.setPlaceholderText("Select a directory")
+        self.file_path.setPlaceholderText("(not set; using scene name)")
+        tip = "Right click in the text field to insert tokens"
+        self.file_path.setToolTip(tip)
+        self.file_path.setStatusTip(tip)
         self.file_path.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.file_path.customContextMenuRequested.connect(self.show_token_menu)
 
