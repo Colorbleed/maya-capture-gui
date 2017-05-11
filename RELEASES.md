@@ -2,7 +2,7 @@
 
 ## 10 / 05 / 2017 - v1.5.0
 __Additions__
-- Implemented lighting menu, pick type of diplay lighting for playblast
+- Implemented lighting menu, pick type of display lighting for playblast
 
 __Changes__
 - Restructured UI for Viewport Plugin
