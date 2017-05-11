@@ -126,6 +126,7 @@ class TimePlugin(capture_gui.plugin.Plugin):
         self.mode.currentIndexChanged.connect(self.on_mode_changed)
         self.start.valueChanged.connect(self.on_mode_changed)
         self.end.valueChanged.connect(self.on_mode_changed)
+        self.custom_frames.textChanged.connect(self.on_mode_changed)
 
     def _ensure_start(self, value):
         self.start.setValue(min(self.start.value(), value))
@@ -159,12 +160,11 @@ class TimePlugin(capture_gui.plugin.Plugin):
             self.end.setVisible(True)
             self.custom_frames.setVisible(False)
             mode_values = self.start.value(), self.end.value()
-
         elif mode == self.CustomFrames:
             self.start.setVisible(False)
             self.end.setVisible(False)
             self.custom_frames.setVisible(True)
-            mode_values = self.custom_frames.text()
+            mode_values = "({})".format(self.custom_frames.text())
         else:
             self.start.setEnabled(False)
             self.end.setEnabled(False)
