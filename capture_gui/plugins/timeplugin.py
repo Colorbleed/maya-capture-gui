@@ -63,6 +63,10 @@ def parse_frames(string):
 
             result.append(frame)
 
+    if not result:
+        # This happens when only spaces are entered with a separator like `,` or `;`
+        raise ValueError("Unable to parse any frames from string: {}".format(string))
+
     return result
 
 
