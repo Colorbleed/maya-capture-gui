@@ -108,10 +108,7 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
             widget.setEnabled(state)
 
     def display_gradient(self):
-        display_type = self.display_type.currentText()
-        state = display_type == "Gradient"
-
-        return state
+        return self.display_type.currentText() == "Gradient"
 
     def apply_inputs(self, settings):
         """Apply the saved inputs from the inputs configuration
