@@ -2,6 +2,7 @@
 
 ## 10 / 05 / 2017 - v1.4.0
 __Additions__
+- File state check reverted to previous
 - Playblast background color can be overridden
 - Playblast takes over custom gradient or solid color
 - Playblast takes scene's background color setting if override is off

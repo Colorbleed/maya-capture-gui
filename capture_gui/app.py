@@ -556,9 +556,8 @@ class App(QtWidgets.QWidget):
         """Read the stored widget inputs"""
         inputs = {}
 
-        is_file = os.path.isfile(self.settingfile)
-        file_size = os.stat(self.settingfile).st_size
-        if not is_file or file_size == 0:
+        if not os.path.isfile(self.settingfile) or \
+                       os.stat(self.settingfile).st_size == 0:
             return inputs
 
         try:
