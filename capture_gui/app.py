@@ -78,7 +78,6 @@ class PreviewWidget(QtWidgets.QWidget):
 
         with lib.no_undo():
             options = self.options_getter()
-
             tempdir = tempfile.mkdtemp()
 
             # override settings that are constants for the preview
@@ -461,9 +460,11 @@ class App(QtWidgets.QWidget):
         # Add the plugin in a QGroupBox to the configuration dialog
         if widget.section == "config":
             layout = self._config_dialog.layout()
+            # create group box
             group_widget = QtWidgets.QGroupBox(widget.label)
             group_layout = QtWidgets.QVBoxLayout(group_widget)
             group_layout.addWidget(widget)
+
             layout.addWidget(group_widget)
 
     def validate(self):
@@ -527,7 +528,6 @@ class App(QtWidgets.QWidget):
         
         :return: filepath of the configuration file
         :rtype: unicode
-
         """
 
         userdir = os.path.expanduser("~")
@@ -557,7 +557,7 @@ class App(QtWidgets.QWidget):
         inputs = {}
 
         if not os.path.isfile(self.settingfile) or \
-                        os.stat(self.settingfile).st_size == 0:
+                       os.stat(self.settingfile).st_size == 0:
             return inputs
 
         try:
@@ -604,7 +604,7 @@ class App(QtWidgets.QWidget):
         """Return the inputs per plug-in widgets by `plugin.id`.
         
         :returns: The inputs per widget
-        :rtype: dict        
+        :rtype: dict
         """
 
         inputs = dict()
