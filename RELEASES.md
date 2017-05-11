@@ -1,5 +1,15 @@
 # Maya Capture GUI RELEASES
 
+## 10 / 05 / 2017 - v1.4.0
+__Additions__
+- Playblast background color can be overridden
+- Playblast takes over custom gradient or solid color
+- Playblast takes scene's background color setting if override is off
+
+__Changes__
+- toggle_override is renamed to on_toggle_override
+
+
 ## 04 / 05 / 2017 - v1.3.1
 - Added token support for filename, example:  <Scene>_<Camera>_<RenderLayer>
 - Solved issue #0026

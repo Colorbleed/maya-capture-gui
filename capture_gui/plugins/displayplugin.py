@@ -64,10 +64,10 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
         self.connections()
 
         # ensure widgets are in the correct enable state
-        self.toggle_override()
+        self.on_toggle_override()
 
     def connections(self):
-        self.override.toggled.connect(self.toggle_override)
+        self.override.toggled.connect(self.on_toggle_override)
 
     def add_color_picker(self, layout, label, default):
         """Create a column with a label and a button to select a color
@@ -101,7 +101,13 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
 
         return color_picker
 
-    def toggle_override(self):
+    def on_toggle_override(self):
+        """
+        Enable or disable the color pickers and background type widgets bases
+        on the current state of the override checkbox
+        
+        :return: None
+        """
         state = self.override.isChecked()
         self.display_type.setEnabled(state)
         for widget in self._colors.values():
