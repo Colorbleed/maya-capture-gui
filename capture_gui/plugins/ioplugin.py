@@ -104,7 +104,11 @@ class IoPlugin(plugin.Plugin):
 
         # Maya's browser return Linux based file paths to ensure Windows is
         # supported we use normpath
-        self.file_path.setText(os.path.normpath(lib.browse()))
+        path = lib.browse()
+        if not path:
+            return
+
+        self.file_path.setText(os.path.normpath(path))
 
     def add_playblast(self, item):
         """
