@@ -244,14 +244,8 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
             outputs['viewport_options'].update(display_lights)
         else:
             # Use settings from the active viewport
-            try:
-                outputs = capture.parse_active_view()
-            except Exception, exc:
-                QtWidgets.QMessageBox.warning(self,
-                                              "Error in capturing!",
-                                              exc,
-                                              QtWidgets.QMessageBox.Ok)
-                return
+            # NOTE: WHen this fails we should give the user a warning
+            outputs = capture.parse_active_view()
 
         # TODO: we could filter out the settings we want to use or leave it be
 
