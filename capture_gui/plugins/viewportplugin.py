@@ -21,7 +21,6 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
 
         # cistom atttributes
         self.show_type_actions = list()
-        self.display_lights_acitons = list()
 
         # get information
         self.show_types = lib.get_show_object_types()
@@ -118,7 +117,9 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
                           "Use Flat Lighting": "flat",
                           "Use Selected Lights": "active",
                           "Use All Lights": "all",
-                          "Use No Lights": "none"}
+                          "Use No Lights": "none",
+                          "Two Sided Ligthing": "twoSidedLighting",
+                          "Shadows": "shadows"}
 
         for label, name in display_lights.items():
             menu.addItem(label, userData=name)

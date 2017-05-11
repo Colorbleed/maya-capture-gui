@@ -3,6 +3,10 @@
 ## 10 / 05 / 2017 - v1.5.0
 __Additions__
 - Implemented lighting menu, pick type of display lighting for playblast
+- Added Two Sided Ligthing and Shadows to the menu
+
+__Changes__
+- Removed redundant attributes
 
 __Changes__
 - Restructured UI for Viewport Plugin
