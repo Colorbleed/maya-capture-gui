@@ -153,6 +153,8 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
             for label, widget in self._colors.items():
                 outputs[label] = widget.color
         else:
+            # Parse active color settings
+            outputs["displayGradient"] = cmds.displayPref(query=True, displayGradient=True)
             for key in COLORS.keys():
                 color = cmds.displayRGBColor(key, query=True)
                 outputs[key] = color
