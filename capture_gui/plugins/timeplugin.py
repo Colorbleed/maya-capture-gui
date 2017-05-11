@@ -31,9 +31,8 @@ def parse_frames(string):
     """
 
     result = list()
-
-    if not string:
-        return result
+    if not string.strip():
+        raise ValueError("Can't parse an empty frame string.")
 
     if not re.match("^[-0-9,; ]*$", string):
         raise ValueError("Invalid symbols in frame string: {}".format(string))
@@ -43,8 +42,6 @@ def parse_frames(string):
         # Skip empty elements
         value = raw.strip().replace(" ", "")
         if not value:
-            if raw:
-                raise ValueError("Empty frame entry: '{0}'".format(raw))
             continue
 
         # Check for sequences (1-20) including negatives (-10--8)
@@ -107,7 +104,7 @@ class TimePlugin(capture_gui.plugin.Plugin):
         # unique frames field
         self.custom_frames = QtWidgets.QLineEdit()
         self.custom_frames.setFixedHeight(frame_input_height)
-        self.custom_frames.setPlaceholderText("1-20,25;50;75,100-150")
+        self.custom_frames.setPlaceholderText("Example: 1-20,25;50;75,100-150")
         self.custom_frames.setVisible(False)
 
         self._layout.addWidget(self.mode)
@@ -119,7 +116,6 @@ class TimePlugin(capture_gui.plugin.Plugin):
         # and the end is never lower than start
         self.end.valueChanged.connect(self._ensure_start)
         self.start.valueChanged.connect(self._ensure_end)
-        self.custom_frames.textChanged.connect(self.validate)
 
         self.on_mode_changed()  # force enabled state refresh
 
@@ -165,6 +161,10 @@ class TimePlugin(capture_gui.plugin.Plugin):
             self.end.setVisible(False)
             self.custom_frames.setVisible(True)
             mode_values = "({})".format(self.custom_frames.text())
+
+            # ensure validation state for custom frames
+            self.validate()
+
         else:
             self.start.setEnabled(False)
             self.end.setEnabled(False)
