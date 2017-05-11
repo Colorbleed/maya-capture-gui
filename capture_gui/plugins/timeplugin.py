@@ -252,7 +252,7 @@ class TimePlugin(capture_gui.plugin.Plugin):
         self.mode.setCurrentIndex(mode)
         self.start.setValue(int(startframe))
         self.end.setValue(int(endframe))
-        if custom_frames:
+        if custom_frames is not None:
             self.custom_frames.setText(custom_frames)
 
     def initialize(self):
