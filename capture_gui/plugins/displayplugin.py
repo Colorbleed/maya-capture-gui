@@ -114,6 +114,12 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
             widget.setEnabled(state)
 
     def display_gradient(self):
+        """
+        Returns whether the background should be displayed as gradient or 
+        solid color. When True the colors will use the top and bottom color to 
+        define the gradient otherwise the background color will be used as 
+        solid color.
+        """
         return self.display_type.currentText() == "Gradient"
 
     def apply_inputs(self, settings):

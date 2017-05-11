@@ -8,6 +8,7 @@ __Additions__
 - Playblast takes scene's background color setting if override is off
 
 __Changes__
+- Updated docstring
 - toggle_override is renamed to on_toggle_override
 - get_color_value is renamed to show_color_dialog
 
