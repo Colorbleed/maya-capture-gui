@@ -16,6 +16,9 @@ def main(show=True):
     """
     # get main maya window to parent widget to
     parent = lib.get_maya_main_window()
+    for widget in parent.children():
+        if isinstance(widget, app.App):
+            widget.close()
 
     # launch app
     window = app.App(title="Capture GUI", parent=parent)
