@@ -1,5 +1,12 @@
 # Maya Capture GUI RELEASES
 
+## 10 / 05 / 2017 - v1.5.0
+__Additions__
+- Implemented lighting menu, pick type of diplay lighting for playblast
+
+__Changes__
+- Restructured UI for Viewport Plugin
+
 ## 10 / 05 / 2017 - v1.4.0
 __Additions__
 - File state check reverted to previous
