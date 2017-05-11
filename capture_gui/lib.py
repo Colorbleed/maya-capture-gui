@@ -302,20 +302,8 @@ def browse(path=None):
             # Scene wasn't saved yet so found no valid name for playblast.
             default_filename = "playblast"
 
-        # Default to images rule (if rule exists in workspace)
-        images_rule = cmds.workspace(variableEntry="images")
-        if images_rule:
-            root = cmds.workspace(query=True, rootDirectory=True)
-            default_root = os.path.join(root, images_rule)
-        else:
-            # start browser at last browsed directory
-            default_root = cmds.workspace(query=True, directory=True)
-
-        # This should never be the case, but just to be safe.
-        if default_root is None:
-            raise RuntimeError("defaultRoot couldn't be defined. "
-                               "Contact your local Technical Director!")
-
+        # Default to images rule
+        default_root = os.path.normpath(get_project_rule("images"))
         default_path = os.path.join(default_root, default_filename)
         path = cmds.fileDialog2(fileMode=0,
                                 dialogStyle=2,
