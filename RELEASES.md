@@ -3,7 +3,7 @@
 ## 10 / 05 / 2017 - v1.5.0
 __Additions__
 - Implemented lighting menu, pick type of display lighting for playblast
-- Added Two Sided Ligthing and Shadows to the menu
+- Added Two Sided Ligthing and Shadows as checkboxes to the widget
 
 __Changes__
 - Removed redundant attributes

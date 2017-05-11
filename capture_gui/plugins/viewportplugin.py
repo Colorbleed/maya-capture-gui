@@ -19,7 +19,7 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         # set inherited attributes
         self.setObjectName(self.label)
 
-        # cistom atttributes
+        # custom atttributes
         self.show_type_actions = list()
 
         # get information
@@ -32,14 +32,15 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
 
         # build
         # region Menus
-
         menus_vlayout = QtWidgets.QHBoxLayout()
 
         # Display Lights
         self.display_light_menu = self._build_light_menu()
+        self.display_light_menu.setFixedHeight(20)
 
         # Show
         self.show_types_button = QtWidgets.QPushButton("Show")
+        self.show_types_button.setFixedHeight(20)
         self.show_types_menu = self._build_show_menu()
         self.show_types_button.setMenu(self.show_types_menu)
 
@@ -50,14 +51,25 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         # endregion Menus
 
         # region Checkboxes
-        checkbox_layout = QtWidgets.QHBoxLayout()
+        checkbox_layout = QtWidgets.QGridLayout()
         self.high_quality = QtWidgets.QCheckBox()
         self.high_quality.setText("Force Viewport 2.0 + AA")
         self.override_viewport = QtWidgets.QCheckBox("Override viewport "
                                                      "settings")
         self.override_viewport.setChecked(True)
-        checkbox_layout.addWidget(self.override_viewport)
-        checkbox_layout.addWidget(self.high_quality)
+
+        # two sided lighting
+        self.two_sided_ligthing = QtWidgets.QCheckBox("Two Sided Ligthing")
+        self.two_sided_ligthing.setChecked(False)
+
+        # show
+        self.shadows = QtWidgets.QCheckBox("Shadows")
+        self.shadows.setChecked(False)
+
+        checkbox_layout.addWidget(self.override_viewport, 0, 0)
+        checkbox_layout.addWidget(self.high_quality, 0, 1)
+        checkbox_layout.addWidget(self.two_sided_ligthing, 1, 0)
+        checkbox_layout.addWidget(self.shadows, 1, 1)
         # endregion Checkboxes
 
         self._layout.addLayout(checkbox_layout)
@@ -117,9 +129,7 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
                           "Use Flat Lighting": "flat",
                           "Use Selected Lights": "active",
                           "Use All Lights": "all",
-                          "Use No Lights": "none",
-                          "Two Sided Ligthing": "twoSidedLighting",
-                          "Shadows": "shadows"}
+                          "Use No Lights": "none"}
 
         for label, name in display_lights.items():
             menu.addItem(label, userData=name)
@@ -130,8 +140,10 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         """Enable or disable show menu when override is checked"""
         state = self.override_viewport.isChecked()
         self.show_types_button.setEnabled(state)
-        self.display_light_menu.setEnabled(state)
         self.high_quality.setEnabled(state)
+        self.display_light_menu.setEnabled(state)
+        self.shadows.setEnabled(state)
+        self.two_sided_ligthing.setEnabled(state)
 
     def toggle_all_visbile(self):
         """Set all object types off or on depending on the state"""
@@ -165,11 +177,14 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
     def get_displaylights(self):
         """
         Get the currently selected displayLight
+        
         :return: the system name of the selected displayLight
         :rtype: dict
         """
         indx = self.display_light_menu.currentIndex()
-        return {"displayLights": self.display_light_menu.itemData(indx)}
+        return {"displayLights": self.display_light_menu.itemData(indx),
+                "shadows": self.shadows.isChecked(),
+                "twoSidedLighting": self.two_sided_ligthing.isChecked()}
 
     def get_inputs(self, as_preset):
         """
@@ -184,7 +199,9 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         """
         inputs = {"high_quality": self.high_quality.isChecked(),
                   "override_viewport_options": self.override_viewport.isChecked(),
-                  "displayLights": self.display_light_menu.currentIndex()}
+                  "displayLights": self.display_light_menu.currentIndex(),
+                  "shadows": self.shadows.isChecked(),
+                  "twoSidedLighting": self.two_sided_ligthing.isChecked()}
 
         inputs.update(self.get_show_inputs())
 
@@ -204,15 +221,20 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         override_viewport = inputs.get("override_viewport_options", True)
         high_quality = inputs.get("high_quality", True)
         displaylight = inputs.get("displayLights", 0)
+        two_sided_ligthing = inputs.get("twoSidedLighting", False)
+        shadows = inputs.get("shadows", False)
 
         self.high_quality.setChecked(high_quality)
         self.override_viewport.setChecked(override_viewport)
         self.show_types_button.setEnabled(override_viewport)
+
+        # display light menu
         self.display_light_menu.setCurrentIndex(displaylight)
+        self.shadows.setChecked(shadows)
+        self.two_sided_ligthing.setChecked(two_sided_ligthing)
 
         for action in self.show_type_actions:
-            label = action.text()
-            system_name = self.show_types[label]
+            system_name = self.show_types[action.text()]
             state = inputs.get(system_name, True)
             action.setChecked(state)
 
