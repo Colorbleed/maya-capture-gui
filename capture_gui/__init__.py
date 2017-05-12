@@ -17,7 +17,7 @@ def main(show=True):
     """
     # get main maya window to parent widget to
     parent = lib.get_maya_main_window()
-    instance = parent.findChild(QtWidgets.QWidget, "CaptureGUI")
+    instance = parent.findChild(QtWidgets.QWidget, app.App.object_name)
     if instance:
         instance.close()
 

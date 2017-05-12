@@ -130,15 +130,13 @@ class PresetWidget(QtWidgets.QWidget):
 
         self.inputs_getter = inputs_getter
 
-        self.discovered_presets = []
-
         layout = QtWidgets.QHBoxLayout(self)
         layout.setAlignment(QtCore.Qt.AlignCenter)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        self.presets = QtWidgets.QComboBox()
-        self.presets.setFixedWidth(220)
-        self.presets.addItem("*")
+        presets = QtWidgets.QComboBox()
+        presets.setFixedWidth(220)
+        presets.addItem("*")
 
         # Icons
         icon_path = os.path.join(os.path.dirname(__file__), "resources")
@@ -157,7 +155,7 @@ class PresetWidget(QtWidgets.QWidget):
         load.setIcon(QtGui.QIcon(load_icon))
         load.setFixedWidth(30)
         load.setToolTip("Load Preset")
-        save.setStatusTip("Load Preset")
+        load.setStatusTip("Load Preset")
 
         config = QtWidgets.QPushButton()
         config.setIcon(QtGui.QIcon(config_icon))
@@ -165,19 +163,21 @@ class PresetWidget(QtWidgets.QWidget):
         config.setToolTip("Preset configuration")
         config.setStatusTip("Preset configuration")
 
-        layout.addWidget(self.presets)
+        layout.addWidget(presets)
         layout.addWidget(save)
         layout.addWidget(load)
         layout.addWidget(config)
 
+        # Make available for all methods
+        self.presets = presets
         self.config = config
         self.load = load
         self.save = save
 
         # Signals
-        save.clicked.connect(self.on_save_preset)
-        load.clicked.connect(self.import_preset)
-        config.clicked.connect(self.config_opened)
+        self.save.clicked.connect(self.on_save_preset)
+        self.load.clicked.connect(self.import_preset)
+        self.config.clicked.connect(self.config_opened)
         self.presets.currentIndexChanged.connect(self.load_active_preset)
 
         self._process_presets()
@@ -188,7 +188,6 @@ class PresetWidget(QtWidgets.QWidget):
         :return: None
         """
         for presetfile in presets.discover():
-            self.discovered_presets.append(presetfile)
             self.add_preset(presetfile)
 
     def import_preset(self):
@@ -296,17 +295,14 @@ class PresetWidget(QtWidgets.QWidget):
 
     def apply_inputs(self, settings):
 
-        to_select = 0
-        path = settings.get("selected", "*")
-        for i in range(self.presets.count()):
-            if self.presets.itemData(i) == path:
-                to_select = i
-                break
+        path = settings.get("selected", None)
+        index = self.presets.findData(path)
+        if index == -1:
+            log.warning("Previously selected preset is not "
+                        "available: {}".format(path))
+            index = 0
 
-        if to_select == 0:
-            log.info("Previously selected preset is not available")
-
-        self.presets.setCurrentIndex(to_select)
+        self.presets.setCurrentIndex(index)
 
     def get_inputs(self, as_preset=False):
         current_index = self.presets.currentIndex()
@@ -528,8 +524,8 @@ class App(QtWidgets.QWidget):
         return True
 
     def get_outputs(self):
-        """Return the settings for a capture as currently set in the 
-        Application.
+        """
+        Return the settings for a capture as currently set in the  Application.
 
         :return: a collection of settings
         :rtype: dict
@@ -561,6 +557,10 @@ class App(QtWidgets.QWidget):
         """
 
         inputs = dict()
+        # Here we collect all the widgets from which we want to store the
+        # current inputs. This will be restored in the next session
+        # The preset widget is added to make sure the user starts with the
+        # previously selected preset configuration
         config_widgets = self._get_plugin_widgets()
         config_widgets.append(self.presetwidget)
         for widget in config_widgets:
@@ -588,7 +588,6 @@ class App(QtWidgets.QWidget):
 
         dialog = QtWidgets.QDialog(self)
         dialog.setWindowTitle("Capture - Preset Configuration")
-
         QtWidgets.QVBoxLayout(dialog)
 
         self._config_dialog = dialog
