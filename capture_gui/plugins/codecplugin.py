@@ -48,6 +48,8 @@ class CodecPlugin(capture_gui.plugin.Plugin):
             if index != -1:
                 self.compression.setCurrentIndex(index)
 
+        self.connections()
+
     def connections(self):
         self.compression.currentIndexChanged.connect(self.options_changed)
         self.format.currentIndexChanged.connect(self.options_changed)
