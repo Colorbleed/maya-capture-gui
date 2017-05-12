@@ -44,6 +44,7 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
         self._colors = dict()
 
         self._layout = QtWidgets.QVBoxLayout()
+        self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
 
         self.override = QtWidgets.QCheckBox("Override Display Options")
