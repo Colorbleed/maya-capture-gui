@@ -380,14 +380,14 @@ class App(QtWidgets.QWidget):
         self.apply_button = QtWidgets.QPushButton("Capture")
         self.layout.addWidget(self.apply_button)
 
-        self.apply_inputs(self._read_widget_configuration())
-
         # default actions
         self.apply_button.clicked.connect(self.apply)
 
         # signals and slots
         self.presetwidget.config_opened.connect(self.show_config)
         self.presetwidget.preset_loaded.connect(self.apply_inputs)
+
+        self.apply_inputs(self._read_widget_configuration())
 
     def apply(self):
         """Run capture action with current settings"""
