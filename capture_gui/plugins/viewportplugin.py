@@ -75,10 +75,18 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         self._layout.addLayout(checkbox_layout)
         self._layout.addLayout(menus_vlayout)
 
-        # signals
+        self.connections()
+
+    def connections(self):
+
         self.high_quality.stateChanged.connect(self.options_changed)
         self.override_viewport.stateChanged.connect(self.options_changed)
         self.override_viewport.stateChanged.connect(self.on_toggle_override)
+
+        self.two_sided_ligthing.stateChanged.connect(self.options_changed)
+        self.shadows.stateChanged.connect(self.options_changed)
+
+        self.display_light_menu.currentIndexChanged.connect(self.options_changed)
 
     def _build_show_menu(self):
         """Build the menu to select which object types are shown in the output.
@@ -105,6 +113,8 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         for shape in self.show_types:
             action = QtWidgets.QAction(menu, text=shape)
             action.setCheckable(True)
+            # emit signal when the state is changed of the checkbox
+            action.toggled.connect(self.options_changed)
             menu.addAction(action)
             self.show_type_actions.append(action)
 

@@ -31,6 +31,9 @@ class RendererPlugin(capture_gui.plugin.Plugin):
 
         self.apply_inputs(self.get_defaults())
 
+        # Signals
+        self.renderers.currentIndexChanged.connect(self.options_changed)
+
     def get_current_renderer(self):
         """Get current renderer by internal name (non-UI)
         

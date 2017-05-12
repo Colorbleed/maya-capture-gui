@@ -69,6 +69,8 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
 
     def connections(self):
         self.override.toggled.connect(self.on_toggle_override)
+        self.override.toggled.connect(self.options_changed)
+        self.display_type.currentIndexChanged.connect(self.options_changed)
 
     def add_color_picker(self, layout, label, default):
         """Create a column with a label and a button to select a color
@@ -98,6 +100,11 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
         column.setAlignment(label_widget, QtCore.Qt.AlignCenter)
 
         layout.addLayout(column)
+
+        # connect signal
+        color_picker.valueChanged.connect(self.options_changed)
+
+        # store widget
         self._colors[label] = color_picker
 
         return color_picker
