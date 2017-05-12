@@ -42,12 +42,15 @@ class PreviewWidget(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self, parent=parent)
 
         # Add attributes
-        self.initialized = False
         self.options_getter = options_getter
         self.validator = validator
         self.preview = ClickLabel()
         self.preview.setFixedWidth(self.preview_width)
         self.preview.setFixedHeight(self.preview_height)
+
+        tip = "Click to force a refresh"
+        self.preview.setToolTip(tip)
+        self.preview.setStatusTip(tip)
 
         # region Build
         self.layout = QtWidgets.QVBoxLayout()
@@ -104,10 +107,7 @@ class PreviewWidget(QtWidgets.QWidget):
 
     def showEvent(self, event):
         """Initialize when shown"""
-        if not self.initialized:
-            self.refresh()
-
-        self.initialized = True
+        self.refresh()
         event.accept()
 
 
@@ -343,7 +343,7 @@ class App(QtWidgets.QWidget):
         title_version = "{} v{}".format(title, version.version)
         self.setObjectName(self.object_name)
         self.setWindowTitle(title_version)
-        self.setMinimumWidth(440)
+        self.setMinimumWidth(380)
 
         # Set dialog window flags so the widget can be correctly parented
         # to Maya main window
