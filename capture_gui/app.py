@@ -122,6 +122,7 @@ class PresetWidget(QtWidgets.QWidget):
     preset_loaded = QtCore.Signal(dict)
     config_opened = QtCore.Signal()
 
+    id = "Presets"
     label = "Presets"
 
     def __init__(self, inputs_getter, parent=None):
@@ -129,13 +130,15 @@ class PresetWidget(QtWidgets.QWidget):
 
         self.inputs_getter = inputs_getter
 
+        self.discovered_presets = []
+
         layout = QtWidgets.QHBoxLayout(self)
         layout.setAlignment(QtCore.Qt.AlignCenter)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        presets = QtWidgets.QComboBox()
-        presets.setFixedWidth(200)
-        presets.addItem("*")
+        self.presets = QtWidgets.QComboBox()
+        self.presets.setFixedWidth(220)
+        self.presets.addItem("*")
 
         # Icons
         icon_path = os.path.join(os.path.dirname(__file__), "resources")
@@ -162,7 +165,7 @@ class PresetWidget(QtWidgets.QWidget):
         config.setToolTip("Preset configuration")
         config.setStatusTip("Preset configuration")
 
-        layout.addWidget(presets)
+        layout.addWidget(self.presets)
         layout.addWidget(save)
         layout.addWidget(load)
         layout.addWidget(config)
@@ -170,22 +173,22 @@ class PresetWidget(QtWidgets.QWidget):
         self.config = config
         self.load = load
         self.save = save
-        self.presets = presets
 
         # Signals
         save.clicked.connect(self.on_save_preset)
         load.clicked.connect(self.import_preset)
         config.clicked.connect(self.config_opened)
-        presets.currentIndexChanged.connect(self.load_active_preset)
+        self.presets.currentIndexChanged.connect(self.load_active_preset)
 
         self._process_presets()
 
     def _process_presets(self):
         """
-        Make sure all registered presets are visible in the plugin
+        Make sure all registered self.presets are visible in the plugin
         :return: None
         """
         for presetfile in presets.discover():
+            self.discovered_presets.append(presetfile)
             self.add_preset(presetfile)
 
     def import_preset(self):
@@ -246,7 +249,8 @@ class PresetWidget(QtWidgets.QWidget):
 
         paths = [self.presets.itemData(i) for i in range(item_count)]
         if filename in paths:
-            log.info("Preset is already in the presets list: {0}".format(filename))
+            log.info("Preset is already in the "
+                     "presets list: {0}".format(filename))
             item_index = paths.index(filename)
         else:
             self.presets.addItem(label, userData=filename)
@@ -255,6 +259,8 @@ class PresetWidget(QtWidgets.QWidget):
         self.presets.blockSignals(True)
         self.presets.setCurrentIndex(item_index)
         self.presets.blockSignals(False)
+
+        return item_index
 
     def save_preset(self, inputs):
         """Save inputs to a file"""
@@ -287,6 +293,26 @@ class PresetWidget(QtWidgets.QWidget):
 
         inputs = self.inputs_getter(as_preset=True)
         self.save_preset(inputs)
+
+    def apply_inputs(self, settings):
+
+        to_select = 0
+        path = settings.get("selected", "*")
+        for i in range(self.presets.count()):
+            if self.presets.itemData(i) == path:
+                to_select = i
+                break
+
+        if to_select == 0:
+            log.info("Previously selected preset is not available")
+
+        self.presets.setCurrentIndex(to_select)
+
+    def get_inputs(self, as_preset=False):
+        current_index = self.presets.currentIndex()
+        selected = self.presets.itemData(current_index)
+
+        return {"selected": selected}
 
 
 class App(QtWidgets.QWidget):
@@ -416,15 +442,24 @@ class App(QtWidgets.QWidget):
 
         return filename
 
-    def _build_configuration_dialog(self):
-        """Build a configuration to store configuration widgets in"""
+    def apply_inputs(self, inputs):
+        """Apply all the settings of the widgets.
 
-        dialog = QtWidgets.QDialog(self)
-        dialog.setWindowTitle("Capture - Preset Configuration")
+        :param inputs: collection of input values based on the GUI
+        :type inputs: dict
 
-        QtWidgets.QVBoxLayout(dialog)
+        :return: None 
+        """
+        if not inputs:
+            return
 
-        self._config_dialog = dialog
+        widgets = self._get_plugin_widgets()
+        widgets.append(self.presetwidget)
+        for widget in widgets:
+            widget_inputs = inputs.get(widget.id, None)
+            if not widget_inputs:
+                continue
+            widget.apply_inputs(widget_inputs)
 
     def show_config(self):
         """Show the advanced configuration"""
@@ -470,6 +505,7 @@ class App(QtWidgets.QWidget):
     def validate(self):
         """
         Check if the outputs of the widgets are good
+        
         :return: True or False
         :rtype: bool
         """
@@ -517,11 +553,45 @@ class App(QtWidgets.QWidget):
 
         return outputs
 
+    def get_inputs(self, as_preset=False):
+        """Return the inputs per plug-in widgets by `plugin.id`.
+
+        :returns: The inputs per widget
+        :rtype: dict
+        """
+
+        inputs = dict()
+        config_widgets = self._get_plugin_widgets()
+        config_widgets.append(self.presetwidget)
+        for widget in config_widgets:
+            widget_inputs = widget.get_inputs(as_preset=as_preset)
+            if not isinstance(widget_inputs, dict):
+                log.debug("Widget inputs are not a dictionary "
+                          "'{}': {}".format(widget.id, widget_inputs))
+                return
+
+            if not widget_inputs:
+                continue
+
+            inputs[widget.id] = widget_inputs
+
+        return inputs
+
     def on_widget_settings_changed(self):
         """Set current preset to '*' on settings change"""
 
         self.options_changed.emit(self.get_outputs)
         self.presetwidget.presets.setCurrentIndex(0)
+
+    def _build_configuration_dialog(self):
+        """Build a configuration to store configuration widgets in"""
+
+        dialog = QtWidgets.QDialog(self)
+        dialog.setWindowTitle("Capture - Preset Configuration")
+
+        QtWidgets.QVBoxLayout(dialog)
+
+        self._config_dialog = dialog
 
     def _ensure_config_exist(self):
         """Create the configuration file if it does not exist yet.
@@ -581,47 +651,6 @@ class App(QtWidgets.QWidget):
             widgets.extend(section)
 
         return widgets
-
-    def apply_inputs(self, inputs):
-        """Apply all the settings of the widgets.
-        
-        :param inputs: collection of input values based on the GUI
-        :type inputs: dict
-        
-        :return: None 
-        """
-        if not inputs:
-            return
-
-        for widget in self._get_plugin_widgets():
-            widget_inputs = inputs.get(widget.id, None)
-            if not widget_inputs:
-                continue
-
-            widget.apply_inputs(widget_inputs)
-
-    def get_inputs(self, as_preset=False):
-        """Return the inputs per plug-in widgets by `plugin.id`.
-        
-        :returns: The inputs per widget
-        :rtype: dict
-        """
-
-        inputs = dict()
-        config_widgets = self._get_plugin_widgets()
-        for widget in config_widgets:
-            widget_inputs = widget.get_inputs(as_preset=as_preset)
-            if not isinstance(widget_inputs, dict):
-                log.debug("Widget inputs are not a dictionary "
-                          "'{}': {}".format(widget.id, widget_inputs))
-                return
-
-            if not widget_inputs:
-                continue
-
-            inputs[widget.id] = widget_inputs
-
-        return inputs
 
     # override close event to ensure the input are stored
 

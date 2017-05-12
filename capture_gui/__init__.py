@@ -1,3 +1,4 @@
+from .vendor.Qt import QtWidgets
 from . import app
 from . import lib
 
@@ -16,10 +17,12 @@ def main(show=True):
     """
     # get main maya window to parent widget to
     parent = lib.get_maya_main_window()
+    instance = parent.findChild(QtWidgets.QWidget, "CaptureGUI")
+    if instance:
+        instance.close()
 
     # launch app
     window = app.App(title="Capture GUI", parent=parent)
-
     if show:
         window.show()
 
