@@ -62,10 +62,10 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
         self._layout.addWidget(self.display_type)
         self._layout.addLayout(self._color_layout)
 
-        self.connections()
-
         # ensure widgets are in the correct enable state
         self.on_toggle_override()
+
+        self.connections()
 
     def connections(self):
         self.override.toggled.connect(self.on_toggle_override)
@@ -128,7 +128,11 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
         define the gradient otherwise the background color will be used as 
         solid color.
         """
-        return self.display_type.currentText() == "Gradient"
+        state = True
+        if self.display_type.currentIndex() == 0:
+            state = False
+
+        return state
 
     def apply_inputs(self, settings):
         """Apply the saved inputs from the inputs configuration
@@ -162,7 +166,8 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
                 outputs[label] = widget.color
         else:
             # Parse active color settings
-            outputs["displayGradient"] = cmds.displayPref(query=True, displayGradient=True)
+            outputs["displayGradient"] = cmds.displayPref(query=True,
+                                                          displayGradient=True)
             for key in COLORS.keys():
                 color = cmds.displayRGBColor(key, query=True)
                 outputs[key] = color

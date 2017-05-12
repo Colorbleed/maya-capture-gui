@@ -81,6 +81,7 @@ class PreviewWidget(QtWidgets.QWidget):
 
         with lib.no_undo():
             options = self.options_getter()
+            print options["display_options"]
             tempdir = tempfile.mkdtemp()
 
             # override settings that are constants for the preview

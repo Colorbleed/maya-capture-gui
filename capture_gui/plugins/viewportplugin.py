@@ -135,13 +135,13 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         menu = QtWidgets.QComboBox(self)
 
         # names cane be found in
-        display_lights = {"Use Default Lighting": "default",
-                          "Use Flat Lighting": "flat",
-                          "Use Selected Lights": "active",
-                          "Use All Lights": "all",
-                          "Use No Lights": "none"}
+        display_lights = (("Use Default Lighting", "default"),
+                          ("Use All Lights", "all"),
+                          ("Use Selected Lights", "active"),
+                          ("Use Flat Lighting", "flat"),
+                          ("Use No Lights", "none"))
 
-        for label, name in display_lights.items():
+        for label, name in display_lights:
             menu.addItem(label, userData=name)
 
         return menu
@@ -230,7 +230,7 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
         # get input values directly from input given
         override_viewport = inputs.get("override_viewport_options", True)
         high_quality = inputs.get("high_quality", True)
-        displaylight = inputs.get("displayLights", 0)
+        displaylight = inputs.get("displayLights", 0)   # default lighting
         two_sided_ligthing = inputs.get("twoSidedLighting", False)
         shadows = inputs.get("shadows", False)
 
@@ -276,10 +276,20 @@ class ViewportPlugin(capture_gui.plugin.Plugin):
             outputs['viewport_options'].update(show_per_type)
             outputs['viewport_options'].update(display_lights)
         else:
+            # TODO: When this fails we should give the user a warning
             # Use settings from the active viewport
-            # NOTE: WHen this fails we should give the user a warning
             outputs = capture.parse_active_view()
 
-        # TODO: we could filter out the settings we want to use or leave it be
+            # Remove the display options and camera attributes
+            outputs.pop("display_options", None)
+            outputs.pop("camera", None)
+
+            # Remove the current renderer because there's already
+            # renderer plug-in handling that
+            outputs["viewport_options"].pop("rendererName", None)
+
+            # Remove all camera options except depth of field
+            dof = outputs["camera_options"]["depthOfField"]
+            outputs["camera_options"] = {"depthOfField": dof}
 
         return outputs
