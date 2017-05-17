@@ -193,10 +193,11 @@ class PresetWidget(QtWidgets.QWidget):
     def import_preset(self):
         """Load preset files to override output values"""
 
+        path = self._default_browse_path()
         filters = "Text file (*.json)"
         filename, _ = QtWidgets.QFileDialog.getOpenFileName(self,
                                                             "Open preference file",
-                                                            "/home",
+                                                            path,
                                                             filters)
         if not filename:
             return
@@ -261,13 +262,36 @@ class PresetWidget(QtWidgets.QWidget):
 
         return item_index
 
+    def _default_browse_path(self):
+        """Return the current browse path for save/load preset.
+        
+        If a preset is currently loaded it will use that specific path
+        otherwise it will go to the last registered preset path.
+        
+        :return: Path to use as default browse location.
+        :rtype: str
+        
+        """
+
+        current_index = self.presets.currentIndex()
+        path = self.presets.itemData(current_index)
+
+        if not path:
+            # Fallback to last registered preset path
+            paths = presets.preset_paths()
+            if paths:
+                path = paths[-1]
+
+        return path
+
     def save_preset(self, inputs):
         """Save inputs to a file"""
 
+        path = self._default_browse_path()
         filters = "Text file (*.json)"
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(self,
                                                             "Save preferences",
-                                                            "",
+                                                            path,
                                                             filters)
         if not filename:
             return
