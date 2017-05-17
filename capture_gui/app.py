@@ -305,10 +305,15 @@ class PresetWidget(QtWidgets.QWidget):
         self.presets.setCurrentIndex(index)
 
     def get_inputs(self, as_preset=False):
-        current_index = self.presets.currentIndex()
-        selected = self.presets.itemData(current_index)
 
-        return {"selected": selected}
+        if as_preset:
+            # Don't save the current preset into the preset because
+            # that would just be recursive and make no sense
+            return {}
+        else:
+            current_index = self.presets.currentIndex()
+            selected = self.presets.itemData(current_index)
+            return {"selected": selected}
 
 
 class App(QtWidgets.QWidget):
