@@ -128,11 +128,7 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
         define the gradient otherwise the background color will be used as 
         solid color.
         """
-        state = True
-        if self.display_type.currentIndex() == 0:
-            state = False
-
-        return state
+        return self.display_type.currentText() == "Gradient"
 
     def apply_inputs(self, settings):
         """Apply the saved inputs from the inputs configuration
