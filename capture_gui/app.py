@@ -244,6 +244,10 @@ class PresetWidget(QtWidgets.QWidget):
         """
 
         filename = os.path.normpath(filename)
+        if not os.path.exists(filename):
+            log.warning("Preset file does not exist: {0}".format(filename))
+            return
+
         label = os.path.splitext(os.path.basename(filename))[0]
         item_count = self.presets.count()
 
