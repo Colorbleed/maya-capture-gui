@@ -4,6 +4,8 @@ from capture_gui.vendor.Qt import QtCore, QtWidgets, QtGui
 class ColorPicker(QtWidgets.QPushButton):
     """Custom color pick button to store and retrieve color values"""
 
+    valueChanged = QtCore.Signal()
+
     def __init__(self):
         QtWidgets.QPushButton.__init__(self)
 
@@ -27,6 +29,7 @@ class ColorPicker(QtWidgets.QPushButton):
         :return: None
         """
         self._color = values
+        self.valueChanged.emit()
 
         values = [int(x*255) for x in values]
         self.setStyleSheet("background: rgb({},{},{})".format(*values))

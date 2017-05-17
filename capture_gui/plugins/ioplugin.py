@@ -100,7 +100,11 @@ class IoPlugin(plugin.Plugin):
         self._layout.addWidget(self.path_widget)
         self._layout.addWidget(self.play_recent)
 
+        # Signals  / connections
         self.browse.clicked.connect(self.show_browse_dialog)
+        self.file_path.textChanged.connect(self.options_changed)
+        self.save_file.stateChanged.connect(self.options_changed)
+        self.raw_frame_numbers.stateChanged.connect(self.options_changed)
 
     def show_browse_dialog(self):
         """Set the filepath using a browser dialog.

@@ -62,13 +62,15 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
         self._layout.addWidget(self.display_type)
         self._layout.addLayout(self._color_layout)
 
-        self.connections()
-
         # ensure widgets are in the correct enable state
         self.on_toggle_override()
 
+        self.connections()
+
     def connections(self):
         self.override.toggled.connect(self.on_toggle_override)
+        self.override.toggled.connect(self.options_changed)
+        self.display_type.currentIndexChanged.connect(self.options_changed)
 
     def add_color_picker(self, layout, label, default):
         """Create a column with a label and a button to select a color
@@ -98,6 +100,11 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
         column.setAlignment(label_widget, QtCore.Qt.AlignCenter)
 
         layout.addLayout(column)
+
+        # connect signal
+        color_picker.valueChanged.connect(self.options_changed)
+
+        # store widget
         self._colors[label] = color_picker
 
         return color_picker
@@ -155,7 +162,8 @@ class DisplayPlugin(capture_gui.plugin.Plugin):
                 outputs[label] = widget.color
         else:
             # Parse active color settings
-            outputs["displayGradient"] = cmds.displayPref(query=True, displayGradient=True)
+            outputs["displayGradient"] = cmds.displayPref(query=True,
+                                                          displayGradient=True)
             for key in COLORS.keys():
                 color = cmds.displayRGBColor(key, query=True)
                 outputs[key] = color
