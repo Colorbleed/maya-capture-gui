@@ -648,26 +648,28 @@ class App(QtWidgets.QWidget):
         """Store all used widget settings in the local json file"""
 
         inputs = self.get_inputs(as_preset=False)
+        path = self.settingfile
 
-        with open(self.settingfile, "w") as f:
-            log.debug("Writing JSON file: {0}".format(f))
+        with open(path, "w") as f:
+            log.debug("Writing JSON file: {0}".format(path))
             json.dump(inputs, f, sort_keys=True,
                       indent=4, separators=(',', ': '))
 
     def _read_widget_configuration(self):
         """Read the stored widget inputs"""
-        inputs = {}
 
-        if not os.path.isfile(self.settingfile) or \
-                       os.stat(self.settingfile).st_size == 0:
+        inputs = {}
+        path = self.settingfile
+
+        if not os.path.isfile(path) or os.stat(path).st_size == 0:
             return inputs
 
-        try:
-            with open(self.settingfile, "r") as f:
-                log.debug("Reading JSON file: {0}".format(f))
+        with open(path, "r") as f:
+            log.debug("Reading JSON file: {0}".format(path))
+            try:
                 inputs = json.load(f)
-        except ValueError as error:
-            log.error(str(error))
+            except ValueError as error:
+                log.error(str(error))
 
         return inputs
 
