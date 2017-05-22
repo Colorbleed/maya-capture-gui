@@ -46,8 +46,14 @@ def list_tokens():
 
 # register default tokens
 # scene based tokens
-register_token("<Camera>",
-               lambda options: options['camera'].rsplit("|", 1)[-1],
+def _camera_token(options):
+    """Return short name of camera from capture options"""
+    camera = options['camera']
+    camera = camera.rsplit("|", 1)[-1]  # use short name
+    camera = camera.replace(":", "_")   # namespace `:` to `_`
+    return camera
+
+register_token("<Camera>", _camera_token,
                label="Insert camera name")
 register_token("<Scene>", lambda options: lib.get_current_scenename() or "playblast",
                label="Insert current scene name")
