@@ -105,6 +105,19 @@ class IoPlugin(plugin.Plugin):
         self.file_path.textChanged.connect(self.options_changed)
         self.save_file.stateChanged.connect(self.options_changed)
         self.raw_frame_numbers.stateChanged.connect(self.options_changed)
+        self.save_file.stateChanged.connect(self.on_save_changed)
+
+        # Ensure state is up-to-date with current settings
+        self.on_save_changed()
+
+    def on_save_changed(self):
+        """Update the visibility of the path field"""
+
+        state = self.save_file.isChecked()
+        if state:
+            self.path_widget.show()
+        else:
+            self.path_widget.hide()
 
     def show_browse_dialog(self):
         """Set the filepath using a browser dialog.
