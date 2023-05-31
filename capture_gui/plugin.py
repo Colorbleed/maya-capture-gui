@@ -297,7 +297,10 @@ def discover(paths=None):
             module.__file__ = abspath
 
             try:
-                execfile(abspath, module.__dict__)
+                try:
+                    execfile(abspath, module.__dict__)
+                except NameError:
+                    exec(open(abspath).read(), module.__dict__)
 
                 # Store reference to original module, to avoid
                 # garbage collection from collecting it's global
