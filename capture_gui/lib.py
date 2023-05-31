@@ -8,6 +8,7 @@ import glob
 import subprocess
 import contextlib
 from collections import OrderedDict
+from builtins import int
 
 import datetime
 import maya.cmds as cmds
@@ -391,4 +392,4 @@ def get_maya_main_window():
     """
     ptr = omui.MQtUtil.mainWindow()
     if ptr is not None:
-        return shiboken.wrapInstance(long(ptr), QtWidgets.QWidget)
+        return shiboken.wrapInstance(int(ptr), QtWidgets.QWidget)
